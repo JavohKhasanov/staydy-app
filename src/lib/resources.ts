@@ -764,7 +764,13 @@ export async function getDebtors(): Promise<Debtor[]> {
 
 export async function listExpenses(from?: string, to?: string): Promise<ExpensesList> {
   const res = await api.get<ExpensesList>("/finance/expenses", { params: { from, to } });
-  return res.data;
+  const d = res.data;
+  // Backend sends null (not []) for empty slices; guard so the finance page doesn't crash.
+  return {
+    expenses: d?.expenses ?? [],
+    total: d?.total ?? 0,
+    byCategory: d?.byCategory ?? [],
+  };
 }
 export async function createExpense(body: {
   category: string;
