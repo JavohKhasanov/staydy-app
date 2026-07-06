@@ -1,0 +1,184 @@
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Loader2, CalendarDays } from "lucide-react";
+
+import { extractApiError } from "@/lib/api";
+import { recordAttendance } from "@/lib/resources";
+import type { Group, Student } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+// Per-student status. late/excused count as attended server-side (is_present derived), so they
+// don't lower the risk-facing attendance rate.
+const OPTS = [
+  { v: "PRESENT", label: "Keldi", on: "bg-emerald-600 text-white" },
+  { v: "LATE", label: "Kechikdi", on: "bg-amber-500 text-white" },
+  { v: "EXCUSED", label: "Sababli", on: "bg-sky-500 text-white" },
+  { v: "ABSENT", label: "Kelmadi", on: "bg-rose-600 text-white" },
+];
+
+// AttendanceJournal is the group + date attendance sheet: pick a group and a day, mark the whole
+// roster in one screen, save once. Used by both the admin page and the teacher's /me page — they
+// differ only in how groups/students are loaded (all groups vs the teacher's own).
+export function AttendanceJournal({
+  groups,
+  groupsLoading,
+  loadStudents,
+}: {
+  groups: Group[];
+  groupsLoading: boolean;
+  loadStudents: (group: Group) => Promise<Student[]>;
+}) {
+  const queryClient = useQueryClient();
+  const [groupId, setGroupId] = useState<string>("");
+  const [date, setDate] = useState<string>(todayISO());
+  const [marks, setMarks] = useState<Record<string, string>>({});
+
+  const group = useMemo(() => groups.find((g) => g.id === groupId) ?? null, [groups, groupId]);
+
+  const studentsQ = useQuery({
+    queryKey: ["attendance-journal", groupId],
+    queryFn: () => loadStudents(group!),
+    enabled: !!group,
+  });
+  const students = studentsQ.data ?? [];
+
+  // Default everyone to present when a roster loads or the group changes.
+  useEffect(() => {
+    if (studentsQ.data) {
+      setMarks(Object.fromEntries(studentsQ.data.map((s) => [s.id, "PRESENT"])));
+    }
+  }, [studentsQ.data]);
+
+  const setAll = (v: string) =>
+    setMarks(Object.fromEntries(students.map((s) => [s.id, v])));
+  const presentCount = students.filter((s) => (marks[s.id] ?? "PRESENT") !== "ABSENT").length;
+
+  const save = useMutation({
+    mutationFn: async () => {
+      await Promise.all(
+        students.map((s) =>
+          recordAttendance(s.id, { date, status: marks[s.id] ?? "PRESENT" }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      toast.success("Davomat saqlandi");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  return (
+    <div className="space-y-5">
+      {/* Guruh + sana tanlash */}
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1 block text-xs font-medium text-slate-500">Guruh</label>
+          <Select value={groupId} onValueChange={setGroupId} disabled={groupsLoading}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={groupsLoading ? "Yuklanmoqda..." : "Guruhni tanlang"} />
+            </SelectTrigger>
+            <SelectContent>
+              {groups.map((g) => (
+                <SelectItem key={g.id} value={g.id}>
+                  {g.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="sm:w-52">
+          <label className="mb-1 block text-xs font-medium text-slate-500">Sana</label>
+          <div className="relative">
+            <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="date"
+              value={date}
+              max={todayISO()}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Ro'yxat */}
+      {!group ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Davomat qilish uchun guruhni tanlang.
+        </div>
+      ) : studentsQ.isLoading ? (
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-10 text-slate-400">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      ) : studentsQ.isError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+          {extractApiError(studentsQ.error)}
+        </div>
+      ) : students.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Bu guruhda talaba yo'q.
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <span className="text-sm font-medium text-slate-700">
+              {presentCount}/{students.length} keldi
+            </span>
+            <div className="flex gap-3 text-xs">
+              <button onClick={() => setAll("PRESENT")} className="font-medium text-emerald-700 hover:underline">
+                Hammasi keldi
+              </button>
+              <button onClick={() => setAll("ABSENT")} className="font-medium text-rose-600 hover:underline">
+                Hammasi kelmadi
+              </button>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {students.map((s) => {
+              const cur = marks[s.id] ?? "PRESENT";
+              return (
+                <div key={s.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm font-medium text-slate-800">{s.fullName}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {OPTS.map((o) => (
+                      <button
+                        key={o.v}
+                        onClick={() => setMarks((m) => ({ ...m, [s.id]: o.v }))}
+                        className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                          cur === o.v ? o.on : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-end border-t border-slate-100 px-4 py-3">
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Davomatni saqlash
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

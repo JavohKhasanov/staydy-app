@@ -7,6 +7,7 @@ import {
   BookMarked,
   BookOpen,
   CalendarDays,
+  CalendarCheck,
   GraduationCap,
   ClipboardList,
   Wallet,
@@ -49,6 +50,7 @@ const NAV: NavItem[] = [
   { to: "/courses", label: "Kurslar", icon: BookMarked },
   { to: "/groups", label: "Guruhlar", icon: BookOpen },
   { to: "/schedule", label: "Jadval", icon: CalendarDays },
+  { to: "/attendance", label: "Davomat", icon: CalendarCheck },
   { to: "/teachers", label: "Ustozlar", icon: GraduationCap },
   { to: "/tasks", label: "Vazifalar", icon: ClipboardList },
   { to: "/finance", label: "Moliya", icon: Wallet },
@@ -62,6 +64,7 @@ const NAV: NavItem[] = [
 const TEACHER_NAV: NavItem[] = [
   { to: "/me/students", label: "Mening talabalarim", icon: Users },
   { to: "/me/groups", label: "Mening guruhlarim", icon: BookOpen },
+  { to: "/me/attendance", label: "Davomat", icon: CalendarCheck },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
