@@ -172,7 +172,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
             </Link>
           </div>
           {topDebtors.length ? (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
               {topDebtors.map((d) => (
                 <li key={d.studentId}>
                   <Link
@@ -290,7 +290,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
             Guruhlar bo'yicha xavf
           </h2>
           {data.groupsByRisk?.length ? (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
               {data.groupsByRisk.map((g) => (
                 <li key={g.group} className="flex items-center justify-between py-2.5 text-sm">
                   <span className="font-medium text-slate-900">{g.group}</span>
@@ -315,7 +315,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
             Eng xavfli talabalar
           </h2>
           {data.riskiestStudents?.length ? (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
               {data.riskiestStudents.map((s) => (
                 <li key={s.id}>
                   <Link
