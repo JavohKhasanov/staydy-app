@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { listStudents } from "@/lib/resources";
+import { listStudents, listGroups, listCourses } from "@/lib/resources";
 import { useBranch } from "@/features/branches/BranchContext";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge, normalizeRisk } from "@/components/RiskBadge";
@@ -40,13 +40,26 @@ function StudentsPage() {
     queryKey: ["students"],
     queryFn: listStudents,
   });
+  // Groups + courses resolve a student's course from their group (the student's own legacy
+  // course_name is usually empty), so the KURS column follows the group's course.
+  const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
+  const coursesQ = useQuery({ queryKey: ["courses"], queryFn: listCourses });
+
+  const courseOf = useMemo(() => {
+    const groupById = new Map((groupsQ.data ?? []).map((g) => [g.id, g]));
+    const courseNameById = new Map((coursesQ.data ?? []).map((c) => [c.id, c.name]));
+    return (s: { groupId?: string; course?: string }) => {
+      const cid = s.groupId ? groupById.get(s.groupId)?.courseId : undefined;
+      return (cid ? courseNameById.get(cid) : undefined) ?? s.course ?? "";
+    };
+  }, [groupsQ.data, coursesQ.data]);
 
   // Branch filter (header selector; "" = all branches).
   const students = (data ?? []).filter((s) => !branchId || s.branchId === branchId);
 
   const courses = useMemo(
-    () => Array.from(new Set(students.map((s) => s.course).filter(Boolean))) as string[],
-    [students],
+    () => Array.from(new Set(students.map((s) => courseOf(s)).filter(Boolean))) as string[],
+    [students, courseOf],
   );
   const groups = useMemo(
     () => Array.from(new Set(students.map((s) => s.group).filter(Boolean))) as string[],
@@ -59,7 +72,7 @@ function StudentsPage() {
 
   const filtered = students.filter((s) => {
     if (search && !s.fullName?.toLowerCase().includes(search.toLowerCase())) return false;
-    if (course !== "all" && s.course !== course) return false;
+    if (course !== "all" && courseOf(s) !== course) return false;
     if (group !== "all" && s.group !== group) return false;
     if (mentor !== "all" && s.mentor !== mentor) return false;
     if (risk !== "all" && normalizeRisk(s.riskLevel) !== risk) return false;
@@ -155,7 +168,7 @@ function StudentsPage() {
                         {s.fullName}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{s.course ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-600">{courseOf(s) || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{s.group ?? "—"}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-700">
                       {s.riskScore != null ? s.riskScore.toFixed(0) : "—"}
