@@ -417,6 +417,11 @@ export async function listGroups(): Promise<Group[]> {
   return unwrapList<RawGroup>(res.data).map(mapGroup);
 }
 
+export async function getGroup(id: string): Promise<Group> {
+  const res = await api.get(`/groups/${id}`);
+  return mapGroup(res.data as RawGroup);
+}
+
 export interface NewGroupForm {
   name: string;
   teacherId?: string;

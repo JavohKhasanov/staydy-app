@@ -33,13 +33,15 @@ export function AttendanceJournal({
   groups,
   groupsLoading,
   loadStudents,
+  initialGroupId,
 }: {
   groups: Group[];
   groupsLoading: boolean;
   loadStudents: (group: Group) => Promise<Student[]>;
+  initialGroupId?: string;
 }) {
   const queryClient = useQueryClient();
-  const [groupId, setGroupId] = useState<string>("");
+  const [groupId, setGroupId] = useState<string>(initialGroupId ?? "");
   const [date, setDate] = useState<string>(todayISO());
   const [marks, setMarks] = useState<Record<string, string>>({});
   const [topic, setTopic] = useState<string>("");

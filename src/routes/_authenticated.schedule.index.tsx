@@ -137,6 +137,7 @@ function SessionRow({ group, teacher, room }: { group: Group; teacher?: string; 
   return (
     <Link
       to="/attendance"
+      search={{ groupId: group.id }}
       className="block px-4 py-3 transition hover:bg-slate-50"
       title="Davomat qilish"
     >

@@ -27,6 +27,7 @@ import { Route as AuthenticatedCoursesIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated.attendance.index'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
 import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated.leads.$id'
+import { Route as AuthenticatedGroupsIdRouteImport } from './routes/_authenticated.groups.$id'
 import { Route as AuthenticatedMeStudentsIndexRouteImport } from './routes/_authenticated.me.students.index'
 import { Route as AuthenticatedMeGroupsIndexRouteImport } from './routes/_authenticated.me.groups.index'
 import { Route as AuthenticatedMeAttendanceIndexRouteImport } from './routes/_authenticated.me.attendance.index'
@@ -130,6 +131,11 @@ const AuthenticatedLeadsIdRoute = AuthenticatedLeadsIdRouteImport.update({
   path: '/leads/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGroupsIdRoute = AuthenticatedGroupsIdRouteImport.update({
+  id: '/groups/$id',
+  path: '/groups/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedMeStudentsIndexRoute =
   AuthenticatedMeStudentsIndexRouteImport.update({
     id: '/me/students/',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/integration': typeof AuthenticatedIntegrationRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/leads/$id': typeof AuthenticatedLeadsIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/': typeof AuthenticatedIndexRoute
+  '/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/leads/$id': typeof AuthenticatedLeadsIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/_authenticated/leads/$id': typeof AuthenticatedLeadsIdRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/integration'
     | '/settings'
     | '/tasks'
+    | '/groups/$id'
     | '/leads/$id'
     | '/students/$id'
     | '/attendance/'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/'
+    | '/groups/$id'
     | '/leads/$id'
     | '/students/$id'
     | '/attendance'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
     | '/_authenticated/'
+    | '/_authenticated/groups/$id'
     | '/_authenticated/leads/$id'
     | '/_authenticated/students/$id'
     | '/_authenticated/attendance/'
@@ -420,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeadsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/groups/$id': {
+      id: '/_authenticated/groups/$id'
+      path: '/groups/$id'
+      fullPath: '/groups/$id'
+      preLoaderRoute: typeof AuthenticatedGroupsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/me/students/': {
       id: '/_authenticated/me/students/'
       path: '/me/students'
@@ -449,6 +468,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedGroupsIdRoute: typeof AuthenticatedGroupsIdRoute
   AuthenticatedLeadsIdRoute: typeof AuthenticatedLeadsIdRoute
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
@@ -471,6 +491,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedGroupsIdRoute: AuthenticatedGroupsIdRoute,
   AuthenticatedLeadsIdRoute: AuthenticatedLeadsIdRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,

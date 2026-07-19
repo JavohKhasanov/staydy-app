@@ -7,10 +7,14 @@ import { AttendanceJournal } from "@/features/attendance/AttendanceJournal";
 
 export const Route = createFileRoute("/_authenticated/attendance/")({
   head: () => ({ meta: [{ title: "Davomat — Staydy" }] }),
+  // groupId comes from "Davomat qilish" on a group's page to preselect that group.
+  validateSearch: (s: Record<string, unknown>): { groupId?: string } =>
+    typeof s.groupId === "string" && s.groupId ? { groupId: s.groupId } : {},
   component: AttendancePage,
 });
 
 function AttendancePage() {
+  const { groupId } = Route.useSearch();
   const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
 
   return (
@@ -20,6 +24,7 @@ function AttendancePage() {
         groups={groupsQ.data ?? []}
         groupsLoading={groupsQ.isLoading}
         loadStudents={(g) => listGroupStudents(g.id)}
+        initialGroupId={groupId}
       />
     </div>
   );

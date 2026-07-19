@@ -95,6 +95,7 @@ export function GroupDialog({
     onSuccess: () => {
       toast.success(isEdit ? "Saqlandi" : "Guruh qo'shildi");
       queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({ queryKey: ["group"] });
       onOpenChange(false);
     },
     onError: (err) => toast.error(extractApiError(err)),

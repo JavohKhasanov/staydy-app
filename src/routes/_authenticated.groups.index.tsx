@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -103,9 +103,25 @@ function GroupsPage() {
               <tbody className="divide-y divide-slate-100">
                 {groups.map((g) => (
                   <tr key={g.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">{g.name}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        to="/groups/$id"
+                        params={{ id: g.id }}
+                        className="font-medium text-slate-900 hover:text-indigo-600"
+                      >
+                        {g.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{teacherName(g.teacherId)}</td>
-                    <td className="px-4 py-3 text-slate-600">{courseName(g.courseId)}</td>
+                    <td className="px-4 py-3">
+                      {g.courseId ? (
+                        <Link to="/courses" className="text-slate-600 hover:text-indigo-600">
+                          {courseName(g.courseId)}
+                        </Link>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{daysLabel(g.scheduleDays)}</td>
                     <td className="px-4 py-3 tabular-nums text-slate-600">{timeLabel(g)}</td>
                     <td className="px-4 py-3 text-slate-600">{g.roomId ? roomName(g.roomId) : "—"}</td>
