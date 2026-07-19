@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
@@ -62,13 +62,7 @@ function StudentDetailPage() {
 
   return (
     <div>
-      <Link
-        to={isTeacher ? "/me/students" : "/students"}
-        className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Talabalar ro'yxati
-      </Link>
+      <BackLink fallback={isTeacher ? "/me/students" : "/students"} />
       {isLoading && <LoadingBlock />}
       {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
       {data && <StudentDetailContent student={data} />}
@@ -869,3 +863,24 @@ function formatDate(d?: string): string {
 
 // PageHeader imported above is unused; remove to avoid lint.
 void PageHeader;
+
+
+// BackLink returns to wherever the user came from (Vazifalar, a group page, the students list)
+// and falls back to the list when there is no history (direct link / new tab).
+function BackLink({ fallback }: { fallback: "/students" | "/me/students" }) {
+  const router = useRouter();
+  const navigate = useNavigate();
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
+    else navigate({ to: fallback });
+  };
+  return (
+    <button
+      onClick={goBack}
+      className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 mb-4"
+    >
+      <ArrowLeft className="h-4 w-4 mr-1" />
+      Orqaga
+    </button>
+  );
+}
