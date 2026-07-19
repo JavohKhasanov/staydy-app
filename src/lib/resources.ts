@@ -222,6 +222,16 @@ function isTeacher(): boolean {
   return authStore.getUser()?.role === "teacher";
 }
 
+// Session topic: what was taught for a group on a date, saved alongside attendance.
+export async function getSessionTopic(groupId: string, date: string): Promise<string> {
+  const res = await api.get("/lessons/session", { params: { groupId, date } });
+  return (res.data?.topic as string) ?? "";
+}
+
+export async function saveSessionTopic(groupId: string, date: string, topic: string): Promise<void> {
+  await api.post("/lessons/session", { groupId, date, topic });
+}
+
 export async function recordAttendance(
   studentId: string,
   input: { date: string; status: string; note?: string },

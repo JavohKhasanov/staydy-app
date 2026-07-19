@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Loader2, CalendarDays } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { recordAttendance } from "@/lib/resources";
+import { recordAttendance, getSessionTopic, saveSessionTopic } from "@/lib/resources";
 import type { Group, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,7 @@ export function AttendanceJournal({
   const [groupId, setGroupId] = useState<string>("");
   const [date, setDate] = useState<string>(todayISO());
   const [marks, setMarks] = useState<Record<string, string>>({});
+  const [topic, setTopic] = useState<string>("");
 
   const group = useMemo(() => groups.find((g) => g.id === groupId) ?? null, [groups, groupId]);
 
@@ -51,6 +52,16 @@ export function AttendanceJournal({
     enabled: !!group,
   });
   const students = studentsQ.data ?? [];
+
+  // Prefill the topic already recorded for this group + date.
+  const topicQ = useQuery({
+    queryKey: ["session-topic", groupId, date],
+    queryFn: () => getSessionTopic(groupId, date),
+    enabled: !!group,
+  });
+  useEffect(() => {
+    setTopic(topicQ.data ?? "");
+  }, [topicQ.data]);
 
   // Default everyone to present when a roster loads or the group changes.
   useEffect(() => {
@@ -70,12 +81,14 @@ export function AttendanceJournal({
           recordAttendance(s.id, { date, status: marks[s.id] ?? "PRESENT" }),
         ),
       );
+      if (topic.trim()) await saveSessionTopic(groupId, date, topic.trim());
     },
     onSuccess: () => {
       toast.success("Davomat saqlandi");
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["session-topic", groupId, date] });
     },
     onError: (e) => toast.error(extractApiError(e)),
   });
@@ -133,6 +146,17 @@ export function AttendanceJournal({
         </div>
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <label className="mb-1 block text-xs font-medium text-slate-500">
+              Bugun nima o'tildi? (mavzu)
+            </label>
+            <input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Masalan: Present Perfect, 5-mavzu"
+              className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <span className="text-sm font-medium text-slate-700">
               {presentCount}/{students.length} keldi
