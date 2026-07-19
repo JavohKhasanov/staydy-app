@@ -13,6 +13,7 @@ import {
   getStudent,
   recordAdviceFeedback,
   listAttendance,
+  listCourses,
   listGroups,
   listHomework,
   listNotes,
@@ -322,6 +323,14 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 
 function ProfileTab({ student }: { student: Student }) {
   const isTeacher = useSession().user?.role === "teacher";
+  // Resolve the course through the student's group (the student's own legacy course field is
+  // usually empty) — same rule as the students list.
+  const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups, enabled: !isTeacher });
+  const coursesQ = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !isTeacher });
+  const groupCourseId = groupsQ.data?.find((g) => g.id === student.groupId)?.courseId;
+  const courseName =
+    (groupCourseId ? coursesQ.data?.find((c) => c.id === groupCourseId)?.name : undefined) ??
+    student.course;
   return (
     <div className="space-y-4">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -338,7 +347,7 @@ function ProfileTab({ student }: { student: Student }) {
           <InfoRow label="Manzil" value={student.address} />
           <InfoRow label="Talaba kodi" value={student.studentCode} />
           <InfoRow label="Holat" value={student.status} />
-          <InfoRow label="Kurs" value={student.course} />
+          <InfoRow label="Kurs" value={courseName} />
           <InfoRow label="Guruh" value={student.group} />
           <InfoRow label="Mentor" value={student.mentor} />
           <InfoRow label="Boshlangan sana" value={student.startDate} />
