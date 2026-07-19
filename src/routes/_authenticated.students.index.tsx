@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NewStudentDialog } from "@/features/students/NewStudentDialog";
+import { Pagination, paginate } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/students/")({
   head: () => ({ meta: [{ title: "Talabalar — Staydy" }] }),
@@ -34,6 +35,7 @@ function StudentsPage() {
   const [group, setGroup] = useState("all");
   const [mentor, setMentor] = useState("all");
   const [risk, setRisk] = useState("all");
+  const [page, setPage] = useState(1);
 
   const { branchId } = useBranch();
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -70,7 +72,7 @@ function StudentsPage() {
     [students],
   );
 
-  const filtered = students.filter((s) => {
+  const filteredAll = students.filter((s) => {
     if (search && !s.fullName?.toLowerCase().includes(search.toLowerCase())) return false;
     if (course !== "all" && courseOf(s) !== course) return false;
     if (group !== "all" && s.group !== group) return false;
@@ -78,6 +80,7 @@ function StudentsPage() {
     if (risk !== "all" && normalizeRisk(s.riskLevel) !== risk) return false;
     return true;
   });
+  const { rows: filtered, page: safePage, pages } = paginate(filteredAll, page);
 
   return (
     <div>
@@ -137,13 +140,13 @@ function StudentsPage() {
         {isError && (
           <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />
         )}
-        {!isLoading && !isError && filtered.length === 0 && (
+        {!isLoading && !isError && filteredAll.length === 0 && (
           <EmptyBlock title="Talabalar topilmadi" />
         )}
-        {!isLoading && !isError && filtered.length > 0 && (
-          <div className="overflow-x-auto">
+        {!isLoading && !isError && filteredAll.length > 0 && (
+          <div className="overflow-x-auto max-h-[62vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Ism</th>
                   <th className="px-4 py-3 font-medium">Kurs</th>
@@ -183,6 +186,7 @@ function StudentsPage() {
             </table>
           </div>
         )}
+        <Pagination page={safePage} pages={pages} total={filteredAll.length} onPage={setPage} />
       </div>
     </div>
   );

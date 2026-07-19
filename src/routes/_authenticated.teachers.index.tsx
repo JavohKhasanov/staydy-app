@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
@@ -7,6 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { NewTeacherDialog } from "@/features/teachers/NewTeacherDialog";
 import { TeacherActions } from "@/features/teachers/TeacherActions";
+import { Pagination, paginate } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/teachers/")({
   head: () => ({ meta: [{ title: "Ustozlar — Staydy" }] }),
@@ -18,7 +20,9 @@ function TeachersPage() {
     queryKey: ["teachers"],
     queryFn: listTeachers,
   });
-  const teachers = data ?? [];
+  const teachersAll = data ?? [];
+  const [page, setPage] = useState(1);
+  const { rows: teachers, page: safePage, pages } = paginate(teachersAll, page);
 
   return (
     <div>
@@ -30,13 +34,13 @@ function TeachersPage() {
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {isLoading && <LoadingBlock />}
         {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
-        {!isLoading && !isError && teachers.length === 0 && (
+        {!isLoading && !isError && teachersAll.length === 0 && (
           <EmptyBlock title="Ustozlar topilmadi" description="Yangi ustoz qo'shing" />
         )}
-        {!isLoading && !isError && teachers.length > 0 && (
-          <div className="overflow-x-auto">
+        {!isLoading && !isError && teachersAll.length > 0 && (
+          <div className="overflow-x-auto max-h-[62vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Ism</th>
                   <th className="px-4 py-3 font-medium">Email</th>
@@ -57,6 +61,7 @@ function TeachersPage() {
             </table>
           </div>
         )}
+        <Pagination page={safePage} pages={pages} total={teachersAll.length} onPage={setPage} />
       </div>
     </div>
   );

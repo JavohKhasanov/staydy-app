@@ -14,6 +14,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { NewGroupDialog } from "@/features/groups/NewGroupDialog";
 import { GroupDialog } from "@/features/groups/GroupDialog";
+import { Pagination, paginate } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/groups/")({
   head: () => ({ meta: [{ title: "Guruhlar — Staydy" }] }),
@@ -31,6 +32,7 @@ function GroupsPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Group | null>(null);
   const [parity, setParity] = useState<Parity>("all");
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["groups"],
@@ -54,9 +56,10 @@ function GroupsPage() {
   });
 
   const { branchId } = useBranch();
-  const groups = (data ?? [])
+  const groupsAll = (data ?? [])
     .filter((g) => !branchId || g.branchId === branchId)
     .filter((g) => parity === "all" || matchesParity(g.scheduleDays, parity));
+  const { rows: groups, page: safePage, pages } = paginate(groupsAll, page);
 
   const timeLabel = (g: Group) => (g.startTime ? `${g.startTime}${g.endTime ? `–${g.endTime}` : ""}` : "—");
 
@@ -83,13 +86,13 @@ function GroupsPage() {
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {isLoading && <LoadingBlock />}
         {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
-        {!isLoading && !isError && groups.length === 0 && (
+        {!isLoading && !isError && groupsAll.length === 0 && (
           <EmptyBlock title="Guruhlar topilmadi" description="Yangi guruh qo'shing" />
         )}
-        {!isLoading && !isError && groups.length > 0 && (
-          <div className="overflow-x-auto">
+        {!isLoading && !isError && groupsAll.length > 0 && (
+          <div className="overflow-x-auto max-h-[62vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Nomi</th>
                   <th className="px-4 py-3 font-medium">Ustoz</th>
@@ -155,6 +158,7 @@ function GroupsPage() {
             </table>
           </div>
         )}
+        <Pagination page={safePage} pages={pages} total={groupsAll.length} onPage={setPage} />
       </div>
 
       {editing && (
