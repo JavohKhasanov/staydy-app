@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
+    <div className="h-screen overflow-hidden flex bg-slate-50 text-slate-900">
       {/* Sidebar */}
       <aside
         className={cn(
@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           </button>
         </div>
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-1">
           {nav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.to, item.exact);
@@ -167,8 +167,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center gap-3 px-4 md:px-6">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center gap-3 px-4 md:px-6">
           <button
             className="md:hidden rounded-md p-1.5 hover:bg-slate-100"
             onClick={() => setMobileOpen(true)}
@@ -214,7 +214,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
