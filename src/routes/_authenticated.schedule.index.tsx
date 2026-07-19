@@ -1,190 +1,169 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarCheck, Clock, MapPin, User } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import {
-  deleteLesson,
-  listGroups,
-  listLessons,
-  listRooms,
-  listTeachers,
-  type Lesson,
-} from "@/lib/resources";
+import { listGroups, listRooms, listTeachers } from "@/lib/resources";
+import type { Group } from "@/lib/types";
+import { WEEKDAYS, parseDays, matchesParity } from "@/lib/weekdays";
+import { useBranch } from "@/features/branches/BranchContext";
 import { PageHeader } from "@/components/PageHeader";
-import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
+import { ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
-import { LESSON_STATUS, LessonDialog } from "@/features/lessons/LessonDialog";
-import { AttendanceRoster } from "@/features/lessons/AttendanceRoster";
 
 export const Route = createFileRoute("/_authenticated/schedule/")({
   head: () => ({ meta: [{ title: "Jadval — Staydy" }] }),
   component: SchedulePage,
 });
 
-const STATUS_STYLE: Record<string, string> = {
-  scheduled: "bg-sky-50 text-sky-700",
-  done: "bg-emerald-50 text-emerald-700",
-  cancelled: "bg-rose-50 text-rose-700",
-};
-const statusLabel = (k: string) => LESSON_STATUS.find((s) => s.key === k)?.label ?? k;
-const todayISO = () => new Date().toISOString().slice(0, 10);
+type Parity = "all" | "odd" | "even";
+const PARITY_TABS: { value: Parity; label: string }[] = [
+  { value: "all", label: "Barchasi" },
+  { value: "odd", label: "Toq kunlar" },
+  { value: "even", label: "Juft kunlar" },
+];
+
+const todayCode = () => WEEKDAYS[(new Date().getDay() + 6) % 7].code; // JS Sun=0 -> our Mon-first
 
 function SchedulePage() {
-  const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Lesson | null>(null);
-  const [rosterLesson, setRosterLesson] = useState<Lesson | null>(null);
+  const [parity, setParity] = useState<Parity>("all");
+  const { branchId } = useBranch();
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["lessons"],
-    queryFn: () => listLessons(),
-  });
-  const groups = useQuery({ queryKey: ["groups"], queryFn: listGroups });
+  const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
   const teachers = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
   const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms });
-  const groupName = (id?: string) => groups.data?.find((g) => g.id === id)?.name;
   const teacherName = (id?: string) => teachers.data?.find((t) => t.id === id)?.fullName;
-  const roomName = (l: Lesson) => rooms.data?.find((r) => r.id === l.roomId)?.name || l.room;
+  const roomName = (id?: string) => rooms.data?.find((r) => r.id === id)?.name;
 
-  const del = useMutation({
-    mutationFn: (id: string) => deleteLesson(id),
-    onSuccess: () => {
-      toast.success("Dars o'chirildi");
-      queryClient.invalidateQueries({ queryKey: ["lessons"] });
-    },
-    onError: (e) => toast.error(extractApiError(e)),
-  });
+  const groups = (groupsQ.data ?? [])
+    .filter((g) => !branchId || g.branchId === branchId)
+    .filter((g) => parity === "all" || matchesParity(g.scheduleDays, parity));
 
-  const lessons = data ?? [];
-  // Group by date, preserving the backend's ascending date/time order.
-  const byDate = useMemo(() => {
-    const m = new Map<string, Lesson[]>();
-    for (const l of lessons) {
-      const arr = m.get(l.date);
-      if (arr) arr.push(l);
-      else m.set(l.date, [l]);
-    }
-    return Array.from(m.entries());
-  }, [lessons]);
+  // Build the weekly grid: for each weekday, the groups that meet that day, sorted by start time.
+  const byDay = useMemo(() => {
+    return WEEKDAYS.map((w) => {
+      const items = groups
+        .filter((g) => parseDays(g.scheduleDays).includes(w.code))
+        .sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? ""));
+      return { day: w, items };
+    });
+  }, [groups]);
+
+  const today = todayCode();
+  const hasAny = byDay.some((d) => d.items.length > 0);
 
   return (
     <div>
       <PageHeader
         title="Jadval"
-        description="Dars jadvali (keyingi 30 kun)"
+        description="Haftalik dars jadvali — guruhlar vaqti va kunlaridan avtomatik"
         actions={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setDialogOpen(true);
-            }}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Yangi dars
-          </Button>
+          <Link to="/attendance">
+            <Button className="bg-indigo-600 hover:bg-indigo-700">
+              <CalendarCheck className="h-4 w-4 mr-2" />
+              Davomat
+            </Button>
+          </Link>
         }
       />
 
-      {isLoading && (
+      <div className="mb-4 flex flex-wrap gap-2">
+        {PARITY_TABS.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setParity(t.value)}
+            className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+              parity === t.value
+                ? "bg-slate-900 text-white"
+                : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {groupsQ.isLoading && (
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
           <LoadingBlock />
         </div>
       )}
-      {isError && (
+      {groupsQ.isError && (
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-          <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />
-        </div>
-      )}
-      {!isLoading && !isError && lessons.length === 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-          <EmptyBlock title="Dars yo'q" description="Yangi dars qo'shing" />
+          <ErrorBlock message={extractApiError(groupsQ.error)} onRetry={() => groupsQ.refetch()} />
         </div>
       )}
 
-      {!isLoading &&
-        !isError &&
-        byDate.map(([date, items]) => (
-          <div key={date} className="mb-5">
-            <h3 className="text-sm font-semibold text-slate-700 mb-2">{date}</h3>
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
-              {items.map((l) => (
-                <div key={l.id} className="flex items-center gap-4 px-4 py-3">
-                  <div className="w-24 shrink-0 text-sm tabular-nums text-slate-700">
-                    {l.startTime || "—"}
-                    {l.endTime ? `–${l.endTime}` : ""}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-slate-900 truncate">
-                      {l.topic || groupName(l.groupId) || "Dars"}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-0.5 truncate">
-                      {[groupName(l.groupId), teacherName(l.teacherId), roomName(l)]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </div>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      STATUS_STYLE[l.status] ?? "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {statusLabel(l.status)}
-                  </span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {l.groupId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setRosterLesson(l)}
-                      >
-                        Davomat
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(l);
-                        setDialogOpen(true);
-                      }}
-                      className="text-slate-500 hover:text-indigo-600"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={del.isPending}
-                      onClick={() => {
-                        if (window.confirm("Darsni o'chirasizmi?")) del.mutate(l.id);
-                      }}
-                      className="text-rose-600 hover:bg-rose-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      {!groupsQ.isLoading && !groupsQ.isError && !hasAny && (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Jadval bo'sh. Guruhlarga dars kunlari va vaqtini qo'shsangiz, bu yerda avtomatik ko'rinadi.
+        </div>
+      )}
+
+      {!groupsQ.isLoading && !groupsQ.isError && hasAny && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {byDay
+            .filter((d) => d.items.length > 0)
+            .map(({ day, items }) => (
+              <div
+                key={day.code}
+                className={`rounded-xl border bg-white shadow-sm ${
+                  day.code === today ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200"
+                }`}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
+                  <span className="text-sm font-semibold text-slate-800">{day.full}</span>
+                  {day.code === today && (
+                    <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white">
+                      Bugun
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
-
-      <LessonDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        lesson={editing}
-        defaultDate={todayISO()}
-      />
-      <AttendanceRoster
-        open={!!rosterLesson}
-        onOpenChange={(o) => !o && setRosterLesson(null)}
-        lesson={rosterLesson}
-      />
+                <div className="divide-y divide-slate-100">
+                  {items.map((g) => (
+                    <SessionRow key={g.id} group={g} teacher={teacherName(g.teacherId)} room={roomName(g.roomId)} />
+                  ))}
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function SessionRow({ group, teacher, room }: { group: Group; teacher?: string; room?: string }) {
+  return (
+    <Link
+      to="/attendance"
+      className="block px-4 py-3 transition hover:bg-slate-50"
+      title="Davomat qilish"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-slate-900 truncate">{group.name}</span>
+        {group.startTime && (
+          <span className="inline-flex items-center gap-1 shrink-0 text-xs tabular-nums text-slate-500">
+            <Clock className="h-3 w-3" />
+            {group.startTime}
+            {group.endTime ? `–${group.endTime}` : ""}
+          </span>
+        )}
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+        {teacher && (
+          <span className="inline-flex items-center gap-1">
+            <User className="h-3 w-3" />
+            {teacher}
+          </span>
+        )}
+        {room && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {room}
+          </span>
+        )}
+      </div>
+    </Link>
   );
 }
