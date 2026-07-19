@@ -291,6 +291,10 @@ export async function createStudent(form: NewStudentForm): Promise<string> {
   return res.data.id;
 }
 
+export async function deleteStudent(id: string): Promise<void> {
+  await api.delete(`/students/${id}`);
+}
+
 export async function updateStudent(id: string, form: NewStudentForm): Promise<void> {
   await api.put(`/students/${id}`, studentProfileBody(form));
 }

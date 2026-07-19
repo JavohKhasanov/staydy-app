@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
 import {
   addNote,
   assignStudentGroup,
+  deleteStudent,
   getAiAdvice,
   getStudent,
   recordAdviceFeedback,
@@ -76,6 +77,17 @@ function StudentDetailPage() {
 function StudentDetailContent({ student }: { student: Student }) {
   const isTeacher = useSession().user?.role === "teacher";
   const [editOpen, setEditOpen] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const del = useMutation({
+    mutationFn: () => deleteStudent(student.id),
+    onSuccess: () => {
+      toast.success("Talaba o'chirildi");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      navigate({ to: "/students" });
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
   return (
     <div className="space-y-6">
       {!isTeacher && (
@@ -97,6 +109,26 @@ function StudentDetailContent({ student }: { student: Student }) {
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4 mr-1.5" />
               Tahrirlash
+            </Button>
+          )}
+          {!isTeacher && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={del.isPending}
+              onClick={() => {
+                if (window.confirm(`${student.fullName} va uning barcha yozuvlari o'chiriladi. Davom etasizmi?`)) {
+                  del.mutate();
+                }
+              }}
+              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            >
+              {del.isPending ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-1.5" />
+              )}
+              O'chirish
             </Button>
           )}
           <TelegramLinkButton studentId={student.id} />
