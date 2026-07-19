@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -389,7 +390,11 @@ function InvoiceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Yangi hisob</DialogTitle>
+          <DialogTitle>Yangi hisob (oylik to'lov)</DialogTitle>
+          <DialogDescription>
+            Talaba to'lashi kerak bo'lgan summa yoziladi — balans qarzga o'tadi. Pul kelganda
+            "To'lov" tugmasi bilan yopiladi.
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {

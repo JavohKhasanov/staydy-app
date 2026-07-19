@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MENTOR_ENABLED } from "@/lib/flags";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -184,9 +185,12 @@ export function StudentEditDialog({
               </SelectContent>
             </Select>
           </F>
+          {MENTOR_ENABLED && (
           <F label="Talaba kodi">
             <Input value={form.studentCode} onChange={(e) => set("studentCode", e.target.value)} />
           </F>
+          )}
+          {MENTOR_ENABLED && (
           <F label="Mentor">
             <Select
               value={form.mentorId || NONE}
@@ -205,6 +209,7 @@ export function StudentEditDialog({
               </SelectContent>
             </Select>
           </F>
+          )}
           {(branches.data?.length ?? 0) > 0 && (
             <F label="Filial">
               <Select

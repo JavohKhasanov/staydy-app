@@ -28,6 +28,7 @@ import { EnrollmentsSection } from "@/features/students/EnrollmentsSection";
 import { FinanceSection } from "@/features/students/FinanceSection";
 import { StudentEditDialog } from "@/features/students/StudentEditDialog";
 import { ActivityTimeline } from "@/features/activities/ActivityTimeline";
+import { CONTACT_LOG_ENABLED, MENTOR_ENABLED } from "@/lib/flags";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge } from "@/components/RiskBadge";
 import { TelegramLinkButton } from "@/features/students/TelegramLinkButton";
@@ -210,7 +211,7 @@ function AiAdviceCard({ studentId }: { studentId: string }) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <Sparkles className="h-4 w-4 text-indigo-600" />
-          AI tavsiya (mentor uchun)
+          AI tavsiya
         </h2>
         <Button
           size="sm"
@@ -262,7 +263,7 @@ function AiAdviceCard({ studentId }: { studentId: string }) {
       )}
       {!advice && !unavailable && !mutation.isPending && (
         <p className="text-sm text-slate-500">
-          Talabaning risk holatiga qarab mentor uchun amaliy tavsiya olish — tugmani bosing.
+          Talabaning risk holatiga qarab amaliy tavsiya olish — tugmani bosing.
         </p>
       )}
     </div>
@@ -345,11 +346,11 @@ function ProfileTab({ student }: { student: Student }) {
           <InfoRow label="Ota-ona" value={student.parentName} />
           <InfoRow label="Ota-ona telefoni" value={student.parentPhone} />
           <InfoRow label="Manzil" value={student.address} />
-          <InfoRow label="Talaba kodi" value={student.studentCode} />
+          {MENTOR_ENABLED && <InfoRow label="Talaba kodi" value={student.studentCode} />}
           <InfoRow label="Holat" value={student.status} />
           <InfoRow label="Kurs" value={courseName} />
           <InfoRow label="Guruh" value={student.group} />
-          <InfoRow label="Mentor" value={student.mentor} />
+          {MENTOR_ENABLED && <InfoRow label="Mentor" value={student.mentor} />}
           <InfoRow label="Boshlangan sana" value={student.startDate} />
           <InfoRow label="Maqsad" value={student.goal} />
           <InfoRow label="6 oylik maqsad" value={student.sixMonthTarget} />
@@ -382,7 +383,9 @@ function ProfileTab({ student }: { student: Student }) {
       </div>
       {!isTeacher && <EnrollmentsSection studentId={student.id} />}
       {!isTeacher && <FinanceSection studentId={student.id} />}
-      {!isTeacher && <ActivityTimeline subjectType="student" subjectId={student.id} />}
+      {!isTeacher && CONTACT_LOG_ENABLED && (
+        <ActivityTimeline subjectType="student" subjectId={student.id} />
+      )}
     </div>
   );
 }

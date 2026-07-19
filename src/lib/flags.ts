@@ -4,3 +4,8 @@ export const LEADS_ENABLED = false;
 
 // Integratsiya (CSV import + webhook) hidden for the no-CRM starter audience; flip when needed.
 export const INTEGRATIONS_ENABLED = false;
+
+// Aloqa tarixi (contact log) hidden until SMS/comms ship.
+export const CONTACT_LOG_ENABLED = false;
+// Mentor + student-code fields hidden for the no-CRM starter audience.
+export const MENTOR_ENABLED = false;

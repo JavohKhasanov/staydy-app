@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MENTOR_ENABLED } from "@/lib/flags";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -146,6 +147,7 @@ export function NewStudentDialog() {
               </SelectContent>
             </Select>
           </Field>
+          {MENTOR_ENABLED && (
           <Field label="Mentor">
             <Select value={form.mentorId || NONE} onValueChange={(v) => set("mentorId", v === NONE ? "" : v)}>
               <SelectTrigger>
@@ -161,6 +163,7 @@ export function NewStudentDialog() {
               </SelectContent>
             </Select>
           </Field>
+          )}
 
           {(branches.data?.length ?? 0) > 0 && (
             <Field label="Filial">
