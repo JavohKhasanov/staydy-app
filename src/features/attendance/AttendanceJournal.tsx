@@ -44,6 +44,7 @@ export function AttendanceJournal({
   const [groupId, setGroupId] = useState<string>(initialGroupId ?? "");
   const [date, setDate] = useState<string>(todayISO());
   const [marks, setMarks] = useState<Record<string, string>>({});
+  const [checked, setChecked] = useState<Set<string>>(new Set());
   const [topic, setTopic] = useState<string>("");
 
   const group = useMemo(() => groups.find((g) => g.id === groupId) ?? null, [groups, groupId]);
@@ -65,22 +66,42 @@ export function AttendanceJournal({
     setTopic(topicQ.data ?? "");
   }, [topicQ.data]);
 
-  // Default everyone to present when a roster loads or the group changes.
+  // Default everyone to absent — the teacher marks who actually came.
   useEffect(() => {
     if (studentsQ.data) {
-      setMarks(Object.fromEntries(studentsQ.data.map((s) => [s.id, "PRESENT"])));
+      setMarks(Object.fromEntries(studentsQ.data.map((s) => [s.id, "ABSENT"])));
+      setChecked(new Set());
     }
   }, [studentsQ.data]);
 
   const setAll = (v: string) =>
     setMarks(Object.fromEntries(students.map((s) => [s.id, v])));
-  const presentCount = students.filter((s) => (marks[s.id] ?? "PRESENT") !== "ABSENT").length;
+  const toggleCheck = (id: string) =>
+    setChecked((c) => {
+      const n = new Set(c);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const allChecked = students.length > 0 && checked.size === students.length;
+  const toggleAll = () =>
+    setChecked(allChecked ? new Set() : new Set(students.map((s) => s.id)));
+  // Apply a status to every checked student, then clear the selection.
+  const setChecked_ = (v: string) => {
+    setMarks((m) => {
+      const n = { ...m };
+      checked.forEach((id) => (n[id] = v));
+      return n;
+    });
+    setChecked(new Set());
+  };
+  const presentCount = students.filter((s) => (marks[s.id] ?? "ABSENT") !== "ABSENT").length;
 
   const save = useMutation({
     mutationFn: async () => {
       await Promise.all(
         students.map((s) =>
-          recordAttendance(s.id, { date, status: marks[s.id] ?? "PRESENT" }),
+          recordAttendance(s.id, { date, status: marks[s.id] ?? "ABSENT" }),
         ),
       );
       if (topic.trim()) await saveSessionTopic(groupId, date, topic.trim());
@@ -159,26 +180,56 @@ export function AttendanceJournal({
               className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
           </div>
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-sm font-medium text-slate-700">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+            <span className="flex items-center gap-2.5 text-sm font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={allChecked}
+                onChange={toggleAll}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                title="Hammasini tanlash"
+              />
               {presentCount}/{students.length} keldi
             </span>
-            <div className="flex gap-3 text-xs">
-              <button onClick={() => setAll("PRESENT")} className="font-medium text-emerald-700 hover:underline">
-                Hammasi keldi
-              </button>
-              <button onClick={() => setAll("ABSENT")} className="font-medium text-rose-600 hover:underline">
-                Hammasi kelmadi
-              </button>
-            </div>
+            {checked.size > 0 ? (
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="mr-1 text-slate-500">Tanlangan {checked.size} ta:</span>
+                {OPTS.map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => setChecked_(o.v)}
+                    className={`rounded-md px-2 py-1 font-medium ${o.on}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-3 text-xs">
+                <button onClick={() => setAll("PRESENT")} className="font-medium text-emerald-700 hover:underline">
+                  Hammasi keldi
+                </button>
+                <button onClick={() => setAll("ABSENT")} className="font-medium text-rose-600 hover:underline">
+                  Hammasi kelmadi
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="divide-y divide-slate-100">
             {students.map((s) => {
-              const cur = marks[s.id] ?? "PRESENT";
+              const cur = marks[s.id] ?? "ABSENT";
               return (
                 <div key={s.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-sm font-medium text-slate-800">{s.fullName}</span>
+                  <span className="flex items-center gap-2.5 text-sm font-medium text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={checked.has(s.id)}
+                      onChange={() => toggleCheck(s.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    />
+                    {s.fullName}
+                  </span>
                   <div className="flex flex-wrap gap-1.5">
                     {OPTS.map((o) => (
                       <button
