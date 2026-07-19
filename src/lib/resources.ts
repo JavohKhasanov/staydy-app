@@ -316,6 +316,10 @@ export async function listTasks(): Promise<InterventionTask[]> {
   return unwrapList<Parameters<typeof mapTask>[0]>(res.data).map(mapTask);
 }
 
+export async function startTask(id: string): Promise<void> {
+  await api.post(`/intervention-tasks/${id}/start`);
+}
+
 export async function resolveTask(id: string, resolutionComment: string): Promise<void> {
   await api.post(`/intervention-tasks/${id}/resolve`, { resolutionComment });
 }

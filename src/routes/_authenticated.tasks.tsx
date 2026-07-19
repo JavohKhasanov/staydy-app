@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { listTasks, resolveTask as resolveTaskApi } from "@/lib/resources";
+import { listTasks, resolveTask as resolveTaskApi, startTask } from "@/lib/resources";
 import type { InterventionTask } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -43,6 +43,15 @@ function TasksPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["intervention-tasks"],
     queryFn: listTasks,
+  });
+
+  const startMutation = useMutation({
+    mutationFn: (id: string) => startTask(id),
+    onSuccess: () => {
+      toast.success("Vazifa jarayonga o'tdi");
+      queryClient.invalidateQueries({ queryKey: ["intervention-tasks"] });
+    },
+    onError: (err) => toast.error(extractApiError(err)),
   });
 
   const resolveMutation = useMutation({
@@ -125,17 +134,33 @@ function TasksPage() {
                           {new Date(t.createdAt).toLocaleDateString("uz-UZ")}
                         </div>
                         {t.status !== "RESOLVED" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full mt-3"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setResolveTask(t);
-                            }}
-                          >
-                            Hal qilish
-                          </Button>
+                          <div className="flex gap-2 mt-3">
+                            {t.status === "OPEN" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                disabled={startMutation.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startMutation.mutate(t.id);
+                                }}
+                              >
+                                Boshlash
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setResolveTask(t);
+                              }}
+                            >
+                              Hal qilish
+                            </Button>
+                          </div>
                         )}
                         {t.status === "RESOLVED" && t.resolutionComment && (
                           <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-2 mt-2">

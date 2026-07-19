@@ -150,7 +150,7 @@ export function AttendanceJournal({
         <div className="rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-4 py-3">
             <label className="mb-1 block text-xs font-medium text-slate-500">
-              Bugun nima o'tildi? (mavzu)
+              Bugun nima o'tildi? (mavzu) <span className="text-rose-500">*</span>
             </label>
             <input
               value={topic}
@@ -198,7 +198,11 @@ export function AttendanceJournal({
           </div>
 
           <div className="flex items-center justify-end border-t border-slate-100 px-4 py-3">
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            <Button
+              onClick={() => save.mutate()}
+              disabled={save.isPending || !topic.trim()}
+              title={!topic.trim() ? "Avval mavzuni kiriting" : undefined}
+            >
               {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Davomatni saqlash
             </Button>
