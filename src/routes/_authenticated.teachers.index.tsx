@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { NewTeacherDialog } from "@/features/teachers/NewTeacherDialog";
 import { TeacherActions } from "@/features/teachers/TeacherActions";
-import { Pagination, paginate } from "@/components/Pagination";
+import { Pagination, usePaged } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/teachers/")({
   head: () => ({ meta: [{ title: "Ustozlar — Staydy" }] }),
@@ -21,8 +21,7 @@ function TeachersPage() {
     queryFn: listTeachers,
   });
   const teachersAll = data ?? [];
-  const [page, setPage] = useState(1);
-  const { rows: teachers, page: safePage, pages } = paginate(teachersAll, page);
+  const { rows: teachers, ...pg } = usePaged(teachersAll);
 
   return (
     <div>
@@ -61,7 +60,7 @@ function TeachersPage() {
             </table>
           </div>
         )}
-        <Pagination page={safePage} pages={pages} total={teachersAll.length} onPage={setPage} />
+        <Pagination {...pg} />
       </div>
     </div>
   );

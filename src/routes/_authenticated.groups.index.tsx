@@ -14,7 +14,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { NewGroupDialog } from "@/features/groups/NewGroupDialog";
 import { GroupDialog } from "@/features/groups/GroupDialog";
-import { Pagination, paginate } from "@/components/Pagination";
+import { Pagination, usePaged } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/groups/")({
   head: () => ({ meta: [{ title: "Guruhlar — Staydy" }] }),
@@ -32,7 +32,6 @@ function GroupsPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Group | null>(null);
   const [parity, setParity] = useState<Parity>("all");
-  const [page, setPage] = useState(1);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["groups"],
@@ -59,7 +58,7 @@ function GroupsPage() {
   const groupsAll = (data ?? [])
     .filter((g) => !branchId || g.branchId === branchId)
     .filter((g) => parity === "all" || matchesParity(g.scheduleDays, parity));
-  const { rows: groups, page: safePage, pages } = paginate(groupsAll, page);
+  const { rows: groups, ...pg } = usePaged(groupsAll);
 
   const timeLabel = (g: Group) => (g.startTime ? `${g.startTime}${g.endTime ? `–${g.endTime}` : ""}` : "—");
 
@@ -158,7 +157,7 @@ function GroupsPage() {
             </table>
           </div>
         )}
-        <Pagination page={safePage} pages={pages} total={groupsAll.length} onPage={setPage} />
+        <Pagination {...pg} />
       </div>
 
       {editing && (

@@ -524,7 +524,7 @@ function SurveysTab({ studentId }: { studentId: string }) {
         )}
         {list.data && list.data.length === 0 && <EmptyBlock title="So'rovnomalar yo'q" />}
         {list.data && list.data.length > 0 && (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 max-h-[50vh] overflow-y-auto">
             {list.data.map((s) => (
               <li key={s.id} className="py-3 text-sm">
                 <div className="flex justify-between items-start">
@@ -623,7 +623,7 @@ function AttendanceTab({ studentId }: { studentId: string }) {
         )}
         {list.data && list.data.length === 0 && <EmptyBlock title="Davomat yozuvi yo'q" />}
         {list.data && list.data.length > 0 && (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 max-h-[50vh] overflow-y-auto">
             {list.data.map((a) => (
               <li key={a.id} className="flex items-center justify-between py-2.5 text-sm">
                 <span className="text-slate-700">{formatDate(a.date)}</span>
@@ -716,7 +716,7 @@ function HomeworkTab({ studentId }: { studentId: string }) {
         )}
         {list.data && list.data.length === 0 && <EmptyBlock title="Uy vazifa yozuvi yo'q" />}
         {list.data && list.data.length > 0 && (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 max-h-[50vh] overflow-y-auto">
             {list.data.map((h) => (
               <li key={h.id} className="flex items-center justify-between py-2.5 text-sm">
                 <span className="text-slate-700">{formatDate(h.date)}</span>

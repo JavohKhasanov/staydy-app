@@ -84,9 +84,9 @@ function CoursesPage() {
           <EmptyBlock title="Kurslar yo'q" description="Birinchi kursingizni qo'shing" />
         )}
         {!isLoading && !isError && courses.length > 0 && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[62vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Nomi</th>
                   <th className="px-4 py-3 font-medium">Daraja</th>

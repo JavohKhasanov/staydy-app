@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NewStudentDialog } from "@/features/students/NewStudentDialog";
-import { Pagination, paginate } from "@/components/Pagination";
+import { Pagination, usePaged } from "@/components/Pagination";
 
 export const Route = createFileRoute("/_authenticated/students/")({
   head: () => ({ meta: [{ title: "Talabalar — Staydy" }] }),
@@ -35,7 +35,6 @@ function StudentsPage() {
   const [group, setGroup] = useState("all");
   const [mentor, setMentor] = useState("all");
   const [risk, setRisk] = useState("all");
-  const [page, setPage] = useState(1);
 
   const { branchId } = useBranch();
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -80,7 +79,7 @@ function StudentsPage() {
     if (risk !== "all" && normalizeRisk(s.riskLevel) !== risk) return false;
     return true;
   });
-  const { rows: filtered, page: safePage, pages } = paginate(filteredAll, page);
+  const { rows: filtered, ...pg } = usePaged(filteredAll);
 
   return (
     <div>
@@ -186,7 +185,7 @@ function StudentsPage() {
             </table>
           </div>
         )}
-        <Pagination page={safePage} pages={pages} total={filteredAll.length} onPage={setPage} />
+        <Pagination {...pg} />
       </div>
     </div>
   );

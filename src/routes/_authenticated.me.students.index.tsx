@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { extractApiError } from "@/lib/api";
 import { listMyStudents } from "@/lib/resources";
 import { PageHeader } from "@/components/PageHeader";
+import { Pagination, usePaged } from "@/components/Pagination";
 import { RiskBadge, normalizeRisk } from "@/components/RiskBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Input } from "@/components/ui/input";
@@ -34,11 +35,13 @@ function MyStudentsPage() {
   });
 
   const students = data ?? [];
-  const filtered = students.filter((s) => {
+  const filteredAll = students.filter((s) => {
     if (search && !s.fullName?.toLowerCase().includes(search.toLowerCase())) return false;
     if (risk !== "all" && normalizeRisk(s.riskLevel) !== risk) return false;
     return true;
   });
+
+  const { rows: filtered, ...pg } = usePaged(filteredAll);
 
   return (
     <div>
@@ -75,13 +78,13 @@ function MyStudentsPage() {
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {isLoading && <LoadingBlock />}
         {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
-        {!isLoading && !isError && filtered.length === 0 && (
+        {!isLoading && !isError && filteredAll.length === 0 && (
           <EmptyBlock title="Talabalar topilmadi" />
         )}
-        {!isLoading && !isError && filtered.length > 0 && (
-          <div className="overflow-x-auto">
+        {!isLoading && !isError && filteredAll.length > 0 && (
+          <div className="overflow-x-auto max-h-[62vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium">Ism</th>
                   <th className="px-4 py-3 font-medium">Guruh</th>
@@ -116,6 +119,7 @@ function MyStudentsPage() {
             </table>
           </div>
         )}
+        <Pagination {...pg} />
       </div>
     </div>
   );
