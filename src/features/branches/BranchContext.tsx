@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { listBranches } from "@/lib/resources";
@@ -30,6 +30,13 @@ export function BranchSelector() {
   const { branchId, setBranchId } = useBranch();
   const branches = useQuery({ queryKey: ["branches"], queryFn: listBranches });
   const list = branches.data ?? [];
+  // localStorage survives logout, so a branch picked in ANOTHER center leaks into this one and
+  // silently filters every list to empty. Reset when the stored id isn't in this org's branches.
+  useEffect(() => {
+    if (branches.data && branchId && !branches.data.some((b) => b.id === branchId)) {
+      setBranchId("");
+    }
+  }, [branches.data, branchId]);
   if (list.length === 0) return null;
   return (
     <select
