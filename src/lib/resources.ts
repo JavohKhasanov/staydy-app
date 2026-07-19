@@ -916,8 +916,9 @@ export async function createSalarySlip(body: {
   bonus?: number;
   deduction?: number;
   note?: string;
-}): Promise<void> {
-  await api.post("/salary-slips", body);
+}): Promise<{ id: string }> {
+  const res = await api.post("/salary-slips", body);
+  return res.data as { id: string };
 }
 export async function paySalarySlip(id: string): Promise<void> {
   await api.patch(`/salary-slips/${id}/pay`);

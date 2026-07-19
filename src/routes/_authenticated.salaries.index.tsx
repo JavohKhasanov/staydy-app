@@ -122,7 +122,7 @@ function SalariesPage() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Ustoz</th>
                   <th className="px-4 py-3 font-medium">Davr</th>
-                  <th className="px-4 py-3 font-medium text-right">Gross</th>
+                  <th className="px-4 py-3 font-medium text-right">Asosiy</th>
                   <th className="px-4 py-3 font-medium text-right">Bonus</th>
                   <th className="px-4 py-3 font-medium text-right">Ushlab</th>
                   <th className="px-4 py-3 font-medium text-right">Net</th>
@@ -244,16 +244,20 @@ function NewSalaryDialog({
     onError: (e) => toast.error(extractApiError(e)),
   });
 
+  const [payNow, setPayNow] = useState(false);
   const save = useMutation({
-    mutationFn: () =>
-      createSalarySlip({
+    mutationFn: async () => {
+      const slip = await createSalarySlip({
         teacherId,
         periodStart: start,
         periodEnd: end,
         gross: Number(gross) || 0,
         bonus: Number(bonus) || 0,
         deduction: Number(deduction) || 0,
-      }),
+      });
+      // "To'langan deb belgilash": pay immediately (also records the maosh expense).
+      if (payNow && slip?.id) await paySalarySlip(slip.id);
+    },
     onSuccess: () => {
       toast.success("Maosh qo'shildi");
       qc.invalidateQueries({ queryKey: ["salary-slips"] });
@@ -345,7 +349,7 @@ function NewSalaryDialog({
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs">Gross</Label>
+                  <Label className="text-xs">Asosiy oylik (gross)</Label>
                   <Input
                     type="number"
                     value={gross}
@@ -373,6 +377,15 @@ function NewSalaryDialog({
                 </div>
               </div>
 
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={payNow}
+                  onChange={(e) => setPayNow(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                />
+                To'langan deb belgilash (xarajatga yoziladi)
+              </label>
               <div className="flex items-center justify-between rounded-lg bg-slate-900 px-4 py-2.5 text-white">
                 <span className="text-sm">Net (qo'lga tegadigan)</span>
                 <span className="text-lg font-semibold tabular-nums">{money(net)}</span>

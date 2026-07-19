@@ -100,24 +100,15 @@ function StudentsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <FilterSelect
-            value={course}
-            onChange={setCourse}
-            placeholder="Kurs"
-            options={courses}
-          />
-          <FilterSelect
-            value={group}
-            onChange={setGroup}
-            placeholder="Guruh"
-            options={groups}
-          />
-          <FilterSelect
-            value={mentor}
-            onChange={setMentor}
-            placeholder="Mentor"
-            options={mentors}
-          />
+          {courses.length > 0 && (
+            <FilterSelect value={course} onChange={setCourse} placeholder="Kurs" options={courses} />
+          )}
+          {groups.length > 0 && (
+            <FilterSelect value={group} onChange={setGroup} placeholder="Guruh" options={groups} />
+          )}
+          {mentors.length > 0 && (
+            <FilterSelect value={mentor} onChange={setMentor} placeholder="Mentor" options={mentors} />
+          )}
         </div>
         <div className="mt-3">
           <Select value={risk} onValueChange={setRisk}>
