@@ -11,6 +11,7 @@ import {
 } from "@/lib/resources";
 import { money } from "@/features/students/FinanceSection";
 import { STAGE_OPTIONS } from "@/features/leads/LeadDialog";
+import { LEADS_ENABLED } from "@/lib/flags";
 import { PageHeader } from "@/components/PageHeader";
 
 export const Route = createFileRoute("/_authenticated/reports/")({
@@ -31,7 +32,7 @@ function pct(n: number, total: number) {
 function ReportsPage() {
   const students = useQuery({ queryKey: ["students"], queryFn: listStudents });
   const groups = useQuery({ queryKey: ["groups"], queryFn: listGroups });
-  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads });
+  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
   const teachers = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
   const finance = useQuery({ queryKey: ["finance", "summary"], queryFn: getFinanceSummary });
 
@@ -78,7 +79,7 @@ function ReportsPage() {
       .sort((a, b) => b.students - a.students);
   }, [t, g, s]);
 
-  const loading = students.isLoading || groups.isLoading || leads.isLoading || teachers.isLoading;
+  const loading = students.isLoading || groups.isLoading || (LEADS_ENABLED && leads.isLoading) || teachers.isLoading;
 
   return (
     <div>
@@ -97,7 +98,8 @@ function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Lead conversion */}
+        {/* Lead conversion (hidden until amoCRM) */}
+        {LEADS_ENABLED && (
         <Card title="Lidlar konversiyasi" hint={`${conversion}% yozildi`}>
           {l.length === 0 ? (
             <Empty text="Lid yo'q" />
@@ -110,6 +112,7 @@ function ReportsPage() {
             </div>
           )}
         </Card>
+        )}
 
         {/* Risk distribution */}
         <Card title="Xavf taqsimoti" hint={`${s.length} talaba`}>

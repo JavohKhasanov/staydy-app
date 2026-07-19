@@ -22,6 +22,7 @@ import {
 import type { DashboardData } from "@/lib/types";
 import { money } from "@/features/students/FinanceSection";
 import { STAGE_OPTIONS } from "@/features/leads/LeadDialog";
+import { LEADS_ENABLED } from "@/lib/flags";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge } from "@/components/RiskBadge";
 import {
@@ -110,7 +111,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
   const t = data.totals ?? { students: 0, atRisk: 0, red: 0, yellow: 0 };
   const finance = useQuery({ queryKey: ["finance-summary"], queryFn: getFinanceSummary });
   const debtors = useQuery({ queryKey: ["debtors"], queryFn: getDebtors });
-  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads });
+  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
   const lessons = useQuery({ queryKey: ["lessons"], queryFn: () => listLessons() });
 
   const leadCounts = STAGE_OPTIONS.map((s) => ({
@@ -139,7 +140,8 @@ function DashboardContent({ data }: { data: DashboardData }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${LEADS_ENABLED ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+        {LEADS_ENABLED && (
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -158,6 +160,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
             ))}
           </ul>
         </div>
+        )}
 
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">

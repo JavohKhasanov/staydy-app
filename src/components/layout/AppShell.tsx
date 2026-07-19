@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
-  Target,
   Users,
   BookMarked,
   BookOpen,
@@ -45,7 +44,7 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { to: "/", label: "Boshqaruv paneli", icon: LayoutDashboard, exact: true },
-  { to: "/leads", label: "Lidlar", icon: Target },
+  // Lidlar hidden until amoCRM integration (see lib/flags.ts) — re-add here when it ships.
   { to: "/students", label: "Talabalar", icon: Users },
   { to: "/courses", label: "Kurslar", icon: BookMarked },
   { to: "/groups", label: "Guruhlar", icon: BookOpen },

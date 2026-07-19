@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
 import { listLeads, listStudents } from "@/lib/resources";
+import { LEADS_ENABLED } from "@/lib/flags";
 import { Input } from "@/components/ui/input";
 
 // GlobalSearch is the header search: filters students + leads by name/phone and jumps to them.
@@ -17,14 +18,14 @@ export function GlobalSearch() {
   const active = term.length >= 1;
 
   const students = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: active });
-  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: active });
+  const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: active && LEADS_ENABLED });
 
   const matchS = active
     ? (students.data ?? [])
         .filter((s) => s.fullName?.toLowerCase().includes(term) || s.phone?.includes(term))
         .slice(0, 6)
     : [];
-  const matchL = active
+  const matchL = active && LEADS_ENABLED
     ? (leads.data ?? [])
         .filter((l) => l.name.toLowerCase().includes(term) || (l.phone ?? "").includes(term))
         .slice(0, 4)
@@ -46,7 +47,7 @@ export function GlobalSearch() {
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 150)}
-        placeholder="Talaba yoki lid qidirish..."
+        placeholder={LEADS_ENABLED ? "Talaba yoki lid qidirish..." : "Talaba qidirish..."}
         className="pl-9 bg-slate-50 border-slate-200"
       />
       {open && (
