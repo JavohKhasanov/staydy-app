@@ -243,7 +243,9 @@ function RoomsCard() {
               className="h-10 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
               title="Filial"
             >
-              <option value="">Filial: umumiy</option>
+              <option value="" disabled>
+                Filial tanlang
+              </option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -253,7 +255,7 @@ function RoomsCard() {
           )}
           <Button
             onClick={() => form.name.trim() && add.mutate()}
-            disabled={add.isPending || !form.name.trim()}
+            disabled={add.isPending || !form.name.trim() || (branches.length > 0 && !form.branchId)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0"
           >
             {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
