@@ -13,6 +13,7 @@ import {
   listExpenses,
 } from "@/lib/resources";
 import { PageHeader } from "@/components/PageHeader";
+import { DebtorPayButton } from "@/features/finance/DebtorPayButton";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,7 +101,10 @@ function FinancePage() {
                   >
                     {d.name}
                   </Link>
-                  <span className="tabular-nums text-rose-700 font-medium">{money(d.balance)}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="tabular-nums text-rose-700 font-medium">{money(d.balance)}</span>
+                    <DebtorPayButton studentId={d.studentId} name={d.name} balance={d.balance} />
+                  </span>
                 </li>
               ))}
             </ul>

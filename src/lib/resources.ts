@@ -771,6 +771,24 @@ export async function getStudentFinance(studentId: string): Promise<StudentFinan
   return res.data;
 }
 
+// Group roster billing state for a month: invoiced/paid per student.
+export interface GroupFinanceRow {
+  studentId: string;
+  name: string;
+  invoiced: number;
+  paid: number;
+}
+export async function getGroupFinance(
+  groupId: string,
+  month?: string,
+): Promise<{ period: string; students: GroupFinanceRow[] }> {
+  const res = await api.get(`/groups/${groupId}/finance`, { params: { month } });
+  return {
+    period: res.data?.period ?? "",
+    students: res.data?.students ?? [],
+  };
+}
+
 export async function createInvoice(
   studentId: string,
   body: { amount: number; dueDate?: string; period?: string; note?: string; enrollmentId?: string },

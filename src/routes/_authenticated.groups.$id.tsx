@@ -20,6 +20,7 @@ import { RiskBadge } from "@/components/RiskBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { GroupDialog } from "@/features/groups/GroupDialog";
+import { GroupPayments } from "@/features/groups/GroupPayments";
 
 export const Route = createFileRoute("/_authenticated/groups/$id")({
   head: () => ({ meta: [{ title: "Guruh — Staydy" }] }),
@@ -41,7 +42,8 @@ function GroupDetailPage() {
 
   const g = groupQ.data;
   const teacherName = g?.teacherId ? teachers.data?.find((t) => t.id === g.teacherId)?.fullName : undefined;
-  const courseName = g?.courseId ? courses.data?.find((c) => c.id === g.courseId)?.name : undefined;
+  const course = g?.courseId ? courses.data?.find((c) => c.id === g.courseId) : undefined;
+  const courseName = course?.name;
   const roomName = g?.roomId ? rooms.data?.find((r) => r.id === g.roomId)?.name : undefined;
   const students = studentsQ.data ?? [];
 
@@ -165,6 +167,8 @@ function GroupDetailPage() {
               </div>
             )}
           </div>
+
+          <GroupPayments groupId={g.id} coursePrice={course?.price} />
         </div>
       )}
 
