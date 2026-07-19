@@ -22,6 +22,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { authStore } from "@/lib/auth";
+import { INTEGRATIONS_ENABLED } from "@/lib/flags";
 import { useSession } from "@/features/auth/useSession";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,7 +56,8 @@ const NAV: NavItem[] = [
   { to: "/finance", label: "Moliya", icon: Wallet },
   { to: "/salaries", label: "Maosh", icon: Coins },
   { to: "/reports", label: "Hisobotlar", icon: BarChart3 },
-  { to: "/integration", label: "Integratsiya", icon: Plug },
+  // Integratsiya gated by INTEGRATIONS_ENABLED (filtered below).
+  ...(INTEGRATIONS_ENABLED ? [{ to: "/integration", label: "Integratsiya", icon: Plug }] : []),
   { to: "/settings", label: "Sozlamalar", icon: Settings },
 ];
 
