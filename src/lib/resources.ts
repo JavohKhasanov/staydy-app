@@ -466,6 +466,18 @@ export async function createTeacher(form: NewTeacherForm): Promise<void> {
   });
 }
 
+export async function updateTeacher(id: string, form: { fullName: string; email: string }): Promise<void> {
+  await api.put(`/teachers/${id}`, { fullName: form.fullName, email: form.email });
+}
+
+export async function setTeacherPassword(id: string, password: string): Promise<void> {
+  await api.put(`/teachers/${id}/password`, { password });
+}
+
+export async function deleteTeacher(id: string): Promise<void> {
+  await api.delete(`/teachers/${id}`);
+}
+
 // --- homework (read from the bundled student detail; record like attendance) ---
 
 export async function listHomework(id: string): Promise<Homework[]> {

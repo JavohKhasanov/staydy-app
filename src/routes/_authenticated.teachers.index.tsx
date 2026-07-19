@@ -6,6 +6,7 @@ import { listTeachers } from "@/lib/resources";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { NewTeacherDialog } from "@/features/teachers/NewTeacherDialog";
+import { TeacherActions } from "@/features/teachers/TeacherActions";
 
 export const Route = createFileRoute("/_authenticated/teachers/")({
   head: () => ({ meta: [{ title: "Ustozlar — Staydy" }] }),
@@ -39,6 +40,7 @@ function TeachersPage() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Ism</th>
                   <th className="px-4 py-3 font-medium">Email</th>
+                  <th className="px-4 py-3 font-medium text-right">Amallar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -46,6 +48,9 @@ function TeachersPage() {
                   <tr key={t.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium text-slate-900">{t.fullName}</td>
                     <td className="px-4 py-3 text-slate-600">{t.email}</td>
+                    <td className="px-4 py-3">
+                      <TeacherActions teacher={t} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
