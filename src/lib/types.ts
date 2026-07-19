@@ -122,8 +122,11 @@ export interface Group {
   courseId?: string;
   branchId?: string;
   direction?: string;
-  scheduleDays?: string;
+  scheduleDays?: string; // canonical weekday codes: "mon,wed,fri"
   capacity?: number;
+  startTime?: string; // "HH:MM"
+  endTime?: string;
+  roomId?: string;
   createdAt?: string;
 }
 

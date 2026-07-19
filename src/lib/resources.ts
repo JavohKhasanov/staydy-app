@@ -379,6 +379,9 @@ type RawGroup = {
   direction?: string;
   scheduleDays?: string;
   capacity?: number;
+  startTime?: string;
+  endTime?: string;
+  roomId?: string;
   createdAt?: string;
 };
 
@@ -392,6 +395,9 @@ function mapGroup(g: RawGroup): Group {
     direction: g.direction,
     scheduleDays: g.scheduleDays,
     capacity: g.capacity,
+    startTime: g.startTime,
+    endTime: g.endTime,
+    roomId: g.roomId,
     createdAt: g.createdAt,
   };
 }
@@ -409,10 +415,13 @@ export interface NewGroupForm {
   direction?: string;
   scheduleDays?: string;
   capacity?: number;
+  startTime?: string;
+  endTime?: string;
+  roomId?: string;
 }
 
-export async function createGroup(form: NewGroupForm): Promise<void> {
-  await api.post("/groups", {
+function groupBody(form: NewGroupForm) {
+  return {
     name: form.name,
     teacherId: form.teacherId || undefined,
     courseId: form.courseId || undefined,
@@ -420,7 +429,18 @@ export async function createGroup(form: NewGroupForm): Promise<void> {
     direction: form.direction || undefined,
     scheduleDays: form.scheduleDays || undefined,
     capacity: form.capacity || undefined,
-  });
+    startTime: form.startTime || undefined,
+    endTime: form.endTime || undefined,
+    roomId: form.roomId || undefined,
+  };
+}
+
+export async function createGroup(form: NewGroupForm): Promise<void> {
+  await api.post("/groups", groupBody(form));
+}
+
+export async function updateGroup(id: string, form: NewGroupForm): Promise<void> {
+  await api.put(`/groups/${id}`, groupBody(form));
 }
 
 export async function deleteGroup(id: string): Promise<void> {
