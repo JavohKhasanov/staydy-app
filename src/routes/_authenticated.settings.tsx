@@ -176,20 +176,27 @@ function BranchesCard() {
 // rejects double-booking a room at overlapping times.
 function RoomsCard() {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ name: "", capacity: "" });
+  const [form, setForm] = useState({ name: "", capacity: "", branchId: "" });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["rooms"],
     queryFn: listRooms,
   });
+  const branchesQ = useQuery({ queryKey: ["branches"], queryFn: listBranches });
+  const branches = branchesQ.data ?? [];
+  const branchName = (id?: string) => branches.find((b) => b.id === id)?.name;
   const rooms = data ?? [];
   const invalidate = () => qc.invalidateQueries({ queryKey: ["rooms"] });
 
   const add = useMutation({
     mutationFn: () =>
-      createRoom({ name: form.name.trim(), capacity: form.capacity ? Number(form.capacity) : 0 }),
+      createRoom({
+        name: form.name.trim(),
+        capacity: form.capacity ? Number(form.capacity) : 0,
+        branchId: form.branchId || undefined,
+      }),
     onSuccess: () => {
-      setForm({ name: "", capacity: "" });
+      setForm((f) => ({ name: "", capacity: "", branchId: f.branchId }));
       toast.success("Xona qo'shildi");
       invalidate();
     },
@@ -229,6 +236,21 @@ function RoomsCard() {
             onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
             className="w-28"
           />
+          {branches.length > 0 && (
+            <select
+              value={form.branchId}
+              onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}
+              className="h-10 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+              title="Filial"
+            >
+              <option value="">Filial: umumiy</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <Button
             onClick={() => form.name.trim() && add.mutate()}
             disabled={add.isPending || !form.name.trim()}
@@ -251,6 +273,9 @@ function RoomsCard() {
                     {r.capacity > 0 && (
                       <span className="ml-2 text-xs text-slate-400">{r.capacity} o'rin</span>
                     )}
+                    <span className="ml-2 text-xs text-indigo-500">
+                      {branchName(r.branchId) ?? "Umumiy"}
+                    </span>
                   </span>
                   <button
                     onClick={() => del.mutate(r.id)}
