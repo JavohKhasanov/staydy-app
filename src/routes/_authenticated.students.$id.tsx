@@ -7,7 +7,9 @@ import { ArrowLeft, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp, Trash2 } fr
 import { extractApiError } from "@/lib/api";
 import {
   addNote,
-  assignStudentGroup,
+  addGroupMember,
+  removeGroupMember,
+  listStudentGroups,
   deleteStudent,
   getAiAdvice,
   getStudent,
@@ -388,31 +390,76 @@ function GroupAssign({ student }: { student: Student }) {
   const NONE = "__none__";
   const queryClient = useQueryClient();
   const groups = useQuery({ queryKey: ["groups"], queryFn: listGroups });
-  const mutation = useMutation({
-    mutationFn: (groupId: string | null) => assignStudentGroup(student.id, groupId),
+  const myGroups = useQuery({
+    queryKey: ["student-groups", student.id],
+    queryFn: () => listStudentGroups(student.id),
+  });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["student", student.id] });
+    queryClient.invalidateQueries({ queryKey: ["student-groups", student.id] });
+    queryClient.invalidateQueries({ queryKey: ["students"] });
+    queryClient.invalidateQueries({ queryKey: ["group-students"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+  const addM = useMutation({
+    mutationFn: (groupId: string) => addGroupMember(groupId, student.id),
     onSuccess: () => {
-      toast.success("Guruh yangilandi");
-      queryClient.invalidateQueries({ queryKey: ["student", student.id] });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Guruhga qo'shildi");
+      invalidate();
+    },
+    onError: (err) => toast.error(extractApiError(err)),
+  });
+  const removeM = useMutation({
+    mutationFn: (groupId: string) => removeGroupMember(groupId, student.id),
+    onSuccess: () => {
+      toast.success("Guruhdan chiqarildi");
+      invalidate();
     },
     onError: (err) => toast.error(extractApiError(err)),
   });
 
+  const memberIds = new Set((myGroups.data ?? []).map((g) => g.id));
+  const addable = (groups.data ?? []).filter((g) => !memberIds.has(g.id));
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">Guruh</h2>
+      <h2 className="text-sm font-semibold text-slate-900 mb-3">Guruhlar</h2>
+      {(myGroups.data ?? []).length === 0 && (
+        <p className="mb-2 text-sm text-slate-500">Hali guruhga qo'shilmagan.</p>
+      )}
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {(myGroups.data ?? []).map((g) => (
+          <span
+            key={g.id}
+            className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700"
+          >
+            <Link to="/groups/$id" params={{ id: g.id }} className="hover:underline">
+              {g.name}
+            </Link>
+            <button
+              title="Guruhdan chiqarish"
+              disabled={removeM.isPending}
+              onClick={() => {
+                if (window.confirm(`${g.name} guruhidan chiqarilsinmi?`)) removeM.mutate(g.id);
+              }}
+              className="ml-0.5 text-indigo-400 hover:text-rose-600"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
       <Select
-        value={student.groupId ?? NONE}
-        onValueChange={(v) => mutation.mutate(v === NONE ? null : v)}
-        disabled={mutation.isPending}
+        value={NONE}
+        onValueChange={(v) => v !== NONE && addM.mutate(v)}
+        disabled={addM.isPending || addable.length === 0}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Guruh tanlang" />
+          <SelectValue placeholder="+ Guruhga qo'shish" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={NONE}>Guruhsiz</SelectItem>
-          {(groups.data ?? []).map((g) => (
+          <SelectItem value={NONE}>+ Guruhga qo'shish</SelectItem>
+          {addable.map((g) => (
             <SelectItem key={g.id} value={g.id}>
               {g.name}
             </SelectItem>
@@ -420,7 +467,7 @@ function GroupAssign({ student }: { student: Student }) {
         </SelectContent>
       </Select>
       <p className="text-xs text-slate-500 mt-2">
-        Talabani guruhga biriktirish — ustoz va dashboard shu guruhni ko'radi.
+        Talaba bir vaqtda bir nechta guruhda (kursda) o'qishi mumkin.
       </p>
     </div>
   );

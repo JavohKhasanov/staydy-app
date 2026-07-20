@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Loader2, Search, UserPlus } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { assignStudentGroup, createStudent, listStudents } from "@/lib/resources";
+import { addGroupMember, createStudent, listStudents } from "@/lib/resources";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,7 +47,7 @@ export function AddStudentDialog({
   };
 
   const add = useMutation({
-    mutationFn: (studentId: string) => assignStudentGroup(studentId, groupId),
+    mutationFn: (studentId: string) => addGroupMember(groupId, studentId),
     onSuccess: () => {
       toast.success("Talaba guruhga qo'shildi");
       invalidate();
@@ -60,7 +60,7 @@ export function AddStudentDialog({
   const createAndAdd = useMutation({
     mutationFn: async () => {
       const id = await createStudent({ fullName: newName.trim(), phone: newPhone.trim(), branchId });
-      await assignStudentGroup(id, groupId);
+      await addGroupMember(groupId, id);
     },
     onSuccess: () => {
       toast.success("Yangi talaba yaratildi va guruhga qo'shildi");
@@ -77,7 +77,7 @@ export function AddStudentDialog({
         <DialogHeader>
           <DialogTitle>Talaba qo'shish — {groupName}</DialogTitle>
           <DialogDescription>
-            Mavjud talabani tanlang. Boshqa guruhdagi talaba shu guruhga ko'chiriladi.
+            Mavjud talabani tanlang — talaba bir vaqtda bir nechta guruhda o'qishi mumkin.
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +106,7 @@ export function AddStudentDialog({
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-slate-800">{s.fullName}</div>
                 <div className="text-xs text-slate-400">
-                  {s.group ? `Hozir: ${s.group}` : "Guruhsiz"}
+                  {s.group ? `Guruhlari: ${s.group}` : "Guruhsiz"}
                   {s.phone ? ` · ${s.phone}` : ""}
                 </div>
               </div>

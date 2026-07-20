@@ -234,14 +234,19 @@ export async function saveSessionTopic(groupId: string, date: string, topic: str
 
 export async function recordAttendance(
   studentId: string,
-  input: { date: string; status: string; note?: string },
+  input: { date: string; status: string; groupId?: string; note?: string },
 ): Promise<void> {
   const path = isTeacher()
     ? `/me/students/${studentId}/attendance`
     : `/students/${studentId}/attendance`;
   // Backend now accepts a granular status (present|absent|late|excused); is_present is derived
-  // server-side, so late/excused don't lower the risk-facing attendance rate.
-  await api.post(path, { date: input.date, status: input.status.toLowerCase() });
+  // server-side, so late/excused don't lower the risk-facing attendance rate. groupId marks which
+  // group's session it was (multi-group students).
+  await api.post(path, {
+    date: input.date,
+    status: input.status.toLowerCase(),
+    groupId: input.groupId || undefined,
+  });
 }
 
 export async function addNote(studentId: string, text: string): Promise<void> {
@@ -424,6 +429,19 @@ export async function listGroups(): Promise<Group[]> {
 // Groups scheduled today with no attendance recorded yet (the dashboard warning).
 export async function listMissingAttendance(): Promise<Group[]> {
   const res = await api.get("/groups/attendance-missing");
+  return unwrapList<RawGroup>(res.data).map(mapGroup);
+}
+
+export async function addGroupMember(groupId: string, studentId: string): Promise<void> {
+  await api.post(`/groups/${groupId}/students/${studentId}`);
+}
+
+export async function removeGroupMember(groupId: string, studentId: string): Promise<void> {
+  await api.delete(`/groups/${groupId}/students/${studentId}`);
+}
+
+export async function listStudentGroups(studentId: string): Promise<Group[]> {
+  const res = await api.get(`/students/${studentId}/groups`);
   return unwrapList<RawGroup>(res.data).map(mapGroup);
 }
 

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   ArrowLeft,
+  UserMinus,
   UserPlus,
   BookMarked,
   CalendarCheck,
@@ -15,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { getGroup, listCourses, listGroupStudents, listRooms, listTeachers } from "@/lib/resources";
+import { getGroup, listCourses, listGroupStudents, listRooms, listTeachers, removeGroupMember } from "@/lib/resources";
 import { daysLabel } from "@/lib/weekdays";
 import { RiskBadge } from "@/components/RiskBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
@@ -33,6 +35,17 @@ function GroupDetailPage() {
   const { id } = Route.useParams();
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const qc = useQueryClient();
+  const removeM = useMutation({
+    mutationFn: (studentId: string) => removeGroupMember(id, studentId),
+    onSuccess: () => {
+      toast.success("Talaba guruhdan chiqarildi");
+      qc.invalidateQueries({ queryKey: ["group-students"] });
+      qc.invalidateQueries({ queryKey: ["students"] });
+      qc.invalidateQueries({ queryKey: ["group-finance"] });
+    },
+    onError: () => toast.error("Xatolik yuz berdi"),
+  });
 
   const groupQ = useQuery({ queryKey: ["group", id], queryFn: () => getGroup(id) });
   const studentsQ = useQuery({
@@ -146,6 +159,7 @@ function GroupDetailPage() {
                       <th className="px-4 py-3 font-medium text-right">Xavf</th>
                       <th className="px-4 py-3 font-medium">Daraja</th>
                       <th className="px-4 py-3 font-medium">Telefon</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -167,6 +181,19 @@ function GroupDetailPage() {
                           <RiskBadge level={s.riskLevel} />
                         </td>
                         <td className="px-4 py-3 text-slate-600">{s.phone ?? "—"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            title="Guruhdan chiqarish"
+                            disabled={removeM.isPending}
+                            onClick={() => {
+                              if (window.confirm(`${s.fullName} shu guruhdan chiqarilsinmi?`))
+                                removeM.mutate(s.id);
+                            }}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

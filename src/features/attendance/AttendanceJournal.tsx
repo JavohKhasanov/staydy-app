@@ -101,7 +101,7 @@ export function AttendanceJournal({
     mutationFn: async () => {
       await Promise.all(
         students.map((s) =>
-          recordAttendance(s.id, { date, status: marks[s.id] ?? "ABSENT" }),
+          recordAttendance(s.id, { date, status: marks[s.id] ?? "ABSENT", groupId }),
         ),
       );
       if (topic.trim()) await saveSessionTopic(groupId, date, topic.trim());
