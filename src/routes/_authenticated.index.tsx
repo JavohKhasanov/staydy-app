@@ -18,6 +18,7 @@ import {
   getFinanceSummary,
   listLeads,
   listGroups,
+  listMissingAttendance,
   listTeachers,
 } from "@/lib/resources";
 import type { DashboardData } from "@/lib/types";
@@ -115,6 +116,13 @@ function DashboardContent({ data }: { data: DashboardData }) {
   const debtors = useQuery({ queryKey: ["debtors"], queryFn: getDebtors });
   const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
   const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
+  // Refresh every 5 min so the warning appears while the dashboard sits open.
+  const missingQ = useQuery({
+    queryKey: ["attendance-missing"],
+    queryFn: listMissingAttendance,
+    refetchInterval: 5 * 60_000,
+    staleTime: 0,
+  });
   const teachersQ = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
 
   const leadCounts = STAGE_OPTIONS.map((s) => ({
@@ -125,6 +133,13 @@ function DashboardContent({ data }: { data: DashboardData }) {
   // Today's sessions, generated from each group's recurring schedule (same source as Jadval).
   const todayCode = WEEKDAYS[(new Date().getDay() + 6) % 7].code;
   const teacherName = (id?: string) => teachersQ.data?.find((t) => t.id === id)?.fullName;
+  // Only warn once the session's end time has passed (or start time when no end is set).
+  const nowHM = new Date().toTimeString().slice(0, 5);
+  const missedSessions = (missingQ.data ?? []).filter((g) => {
+    const cutoff = g.endTime || g.startTime;
+    return !!cutoff && cutoff <= nowHM;
+  });
+
   const todaysSessions = (groupsQ.data ?? [])
     .filter((g) => parseDays(g.scheduleDays).includes(todayCode))
     .sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? ""))
@@ -148,6 +163,33 @@ function DashboardContent({ data }: { data: DashboardData }) {
           tone="rose"
         />
       </div>
+
+      {missedSessions.length > 0 && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+            <AlertTriangle className="h-4 w-4" />
+            Davomat qilinmagan darslar
+          </div>
+          <ul className="mt-2 space-y-1.5">
+            {missedSessions.map((g) => (
+              <li key={g.id} className="flex flex-wrap items-center gap-2 text-sm text-rose-800">
+                <span className="font-medium">{g.name}</span>
+                <span className="tabular-nums text-rose-500">
+                  {g.startTime}
+                  {g.endTime ? `–${g.endTime}` : ""}
+                </span>
+                <Link
+                  to="/attendance"
+                  search={{ groupId: g.id }}
+                  className="ml-auto rounded-md bg-rose-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-rose-700"
+                >
+                  Davomat qilish
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className={`grid grid-cols-1 gap-4 ${LEADS_ENABLED ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
         {LEADS_ENABLED && (
