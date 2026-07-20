@@ -75,6 +75,31 @@ export function GroupDialog({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  const branchList = branches.data ?? [];
+  const branchRequired = branchList.length > 0;
+  // Branch-scoped choices: teachers/rooms of the picked branch (org-wide ones always allowed).
+  const teacherList = (teachers.data ?? []).filter(
+    (t) => !branchRequired || !form.branchId || !t.branchId || t.branchId === form.branchId,
+  );
+  const roomList = (rooms.data ?? []).filter(
+    (r) => !branchRequired || !form.branchId || !r.branchId || r.branchId === form.branchId,
+  );
+  // If the branch changes, drop selections that no longer belong to it.
+  const pickBranch = (v: string) => {
+    setForm((f) => ({
+      ...f,
+      branchId: v,
+      teacherId:
+        (teachers.data ?? []).find((t) => t.id === f.teacherId && (!t.branchId || t.branchId === v))
+          ? f.teacherId
+          : "",
+      roomId:
+        (rooms.data ?? []).find((r) => r.id === f.roomId && (!r.branchId || r.branchId === v))
+          ? f.roomId
+          : "",
+    }));
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
       const payload = {
@@ -119,6 +144,26 @@ export function GroupDialog({
             <Input value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Masalan: IELTS-4" />
           </Field>
 
+          {branchRequired && (
+            <Field label="Filial" required>
+              <select
+                value={form.branchId}
+                onChange={(e) => pickBranch(e.target.value)}
+                required
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+              >
+                <option value="" disabled>
+                  Avval filialni tanlang
+                </option>
+                {branchList.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ustoz">
               <Select value={form.teacherId} onValueChange={(v) => set("teacherId", v)}>
@@ -126,7 +171,7 @@ export function GroupDialog({
                   <SelectValue placeholder="Tanlang" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(teachers.data ?? []).map((t) => (
+                  {teacherList.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.fullName}
                     </SelectItem>
@@ -167,7 +212,7 @@ export function GroupDialog({
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(rooms.data ?? []).map((r) => (
+                  {roomList.map((r) => (
                     <SelectItem key={r.id} value={r.id}>
                       {r.name}
                     </SelectItem>
@@ -186,28 +231,11 @@ export function GroupDialog({
             </Field>
           </div>
 
-          {(branches.data?.length ?? 0) > 0 && (
-            <Field label="Filial">
-              <Select value={form.branchId} onValueChange={(v) => set("branchId", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tanlang" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(branches.data ?? []).map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={mutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button type="submit" disabled={mutation.isPending || (branchRequired && !form.branchId)} className="bg-indigo-600 hover:bg-indigo-700">
               {mutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Saqlash
             </Button>

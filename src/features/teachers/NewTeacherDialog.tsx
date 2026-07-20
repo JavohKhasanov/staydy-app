@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { createTeacher } from "@/lib/resources";
+import { createTeacher, listBranches } from "@/lib/resources";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,17 +18,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type FormState = { fullName: string; email: string; password: string };
-const initial: FormState = { fullName: "", email: "", password: "" };
+type FormState = { fullName: string; email: string; password: string; branchId: string };
+const initial: FormState = { fullName: "", email: "", password: "", branchId: "" };
 
 export function NewTeacherDialog() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(initial);
   const queryClient = useQueryClient();
+  const branchesQ = useQuery({ queryKey: ["branches"], queryFn: listBranches });
+  const branches = branchesQ.data ?? [];
 
   const mutation = useMutation({
     mutationFn: async () => {
-      await createTeacher({ fullName: form.fullName, email: form.email, password: form.password });
+      await createTeacher({ fullName: form.fullName, email: form.email, password: form.password, branchId: form.branchId });
     },
     onSuccess: () => {
       toast.success("Ustoz qo'shildi");
@@ -81,6 +83,25 @@ export function NewTeacherDialog() {
               placeholder="ustoz@markaz.uz"
             />
           </Field>
+          {branches.length > 0 && (
+            <Field label="Filial" required>
+              <select
+                value={form.branchId}
+                onChange={(e) => set("branchId", e.target.value)}
+                required
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+              >
+                <option value="" disabled>
+                  Filial tanlang
+                </option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Parol (kamida 8 belgi)" required>
             <Input
               type="password"

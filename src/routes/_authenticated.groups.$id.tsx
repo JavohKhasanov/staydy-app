@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  UserPlus,
   BookMarked,
   CalendarCheck,
   CalendarDays,
@@ -21,6 +22,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { GroupDialog } from "@/features/groups/GroupDialog";
 import { GroupPayments } from "@/features/groups/GroupPayments";
+import { AddStudentDialog } from "@/features/groups/AddStudentDialog";
 
 export const Route = createFileRoute("/_authenticated/groups/$id")({
   head: () => ({ meta: [{ title: "Guruh — Staydy" }] }),
@@ -30,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/groups/$id")({
 function GroupDetailPage() {
   const { id } = Route.useParams();
   const [editOpen, setEditOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const groupQ = useQuery({ queryKey: ["group", id], queryFn: () => getGroup(id) });
   const studentsQ = useQuery({
@@ -119,6 +122,10 @@ function GroupDetailPage() {
                   {g.capacity ? `/${g.capacity}` : ""}
                 </span>
               </span>
+              <Button size="sm" variant="outline" className="h-8" onClick={() => setAddOpen(true)}>
+                <UserPlus className="h-4 w-4 mr-1.5" />
+                Talaba qo'shish
+              </Button>
             </div>
             {studentsQ.isLoading && <LoadingBlock />}
             {studentsQ.isError && (
@@ -173,6 +180,9 @@ function GroupDetailPage() {
       )}
 
       {editOpen && g && <GroupDialog open onOpenChange={(o) => !o && setEditOpen(false)} group={g} />}
+      {addOpen && g && (
+        <AddStudentDialog groupId={g.id} groupName={g.name} onClose={() => setAddOpen(false)} />
+      )}
     </div>
   );
 }

@@ -489,11 +489,12 @@ type RawTeacher = {
   email: string;
   fullName: string;
   role?: string;
+  branchId?: string;
   createdAt?: string;
 };
 
 function mapTeacher(t: RawTeacher): Teacher {
-  return { id: t.id, email: t.email, fullName: t.fullName, role: t.role, createdAt: t.createdAt };
+  return { id: t.id, email: t.email, fullName: t.fullName, role: t.role, branchId: t.branchId, createdAt: t.createdAt };
 }
 
 export async function listTeachers(): Promise<Teacher[]> {
@@ -505,6 +506,7 @@ export interface NewTeacherForm {
   fullName: string;
   email: string;
   password: string;
+  branchId?: string;
 }
 
 export async function createTeacher(form: NewTeacherForm): Promise<void> {
@@ -512,11 +514,19 @@ export async function createTeacher(form: NewTeacherForm): Promise<void> {
     fullName: form.fullName,
     email: form.email,
     password: form.password,
+    branchId: form.branchId || undefined,
   });
 }
 
-export async function updateTeacher(id: string, form: { fullName: string; email: string }): Promise<void> {
-  await api.put(`/teachers/${id}`, { fullName: form.fullName, email: form.email });
+export async function updateTeacher(
+  id: string,
+  form: { fullName: string; email: string; branchId?: string },
+): Promise<void> {
+  await api.put(`/teachers/${id}`, {
+    fullName: form.fullName,
+    email: form.email,
+    branchId: form.branchId || undefined,
+  });
 }
 
 export async function setTeacherPassword(id: string, password: string): Promise<void> {

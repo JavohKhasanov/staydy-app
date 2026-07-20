@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Pencil, KeyRound, Trash2 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { updateTeacher, setTeacherPassword, deleteTeacher } from "@/lib/resources";
+import { updateTeacher, setTeacherPassword, deleteTeacher, listBranches } from "@/lib/resources";
 import type { Teacher } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,9 +73,12 @@ function EditDialog({ teacher, onClose }: { teacher: Teacher; onClose: () => voi
   const qc = useQueryClient();
   const [fullName, setFullName] = useState(teacher.fullName);
   const [email, setEmail] = useState(teacher.email);
+  const [branchId, setBranchId] = useState(teacher.branchId ?? "");
+  const branchesQ = useQuery({ queryKey: ["branches"], queryFn: listBranches });
+  const branches = branchesQ.data ?? [];
 
   const m = useMutation({
-    mutationFn: () => updateTeacher(teacher.id, { fullName, email }),
+    mutationFn: () => updateTeacher(teacher.id, { fullName, email, branchId }),
     onSuccess: () => {
       toast.success("Saqlandi");
       qc.invalidateQueries({ queryKey: ["teachers"] });
@@ -105,6 +108,23 @@ function EditDialog({ teacher, onClose }: { teacher: Teacher; onClose: () => voi
             <Label className="text-xs font-medium text-slate-600">Email</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
+          {branches.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">Filial</Label>
+              <select
+                value={branchId}
+                onChange={(e) => setBranchId(e.target.value)}
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+              >
+                <option value="">—</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Bekor qilish

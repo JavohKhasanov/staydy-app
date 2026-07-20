@@ -135,6 +135,7 @@ export interface Teacher {
   email: string;
   fullName: string;
   role?: string;
+  branchId?: string;
   createdAt?: string;
 }
 
