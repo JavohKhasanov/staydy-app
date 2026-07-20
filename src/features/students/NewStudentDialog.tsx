@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MENTOR_ENABLED } from "@/lib/flags";
+import { formatUzPhone, stripPhone } from "@/lib/phone";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -51,7 +52,7 @@ type FormState = {
 
 const initial: FormState = {
   fullName: "",
-  phone: "",
+  phone: "+998 ",
   groupId: "",
   mentorId: "",
   branchId: "",
@@ -79,7 +80,7 @@ export function NewStudentDialog() {
     mutationFn: async () => {
       const id = await createStudent({
         fullName: form.fullName,
-        phone: form.phone,
+        phone: stripPhone(form.phone),
         email: form.email,
         birthDate: form.birthDate,
         gender: form.gender,
@@ -129,7 +130,7 @@ export function NewStudentDialog() {
             <Input value={form.fullName} onChange={(e) => set("fullName", e.target.value)} required />
           </Field>
           <Field label="Telefon">
-            <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+            <Input value={form.phone} onChange={(e) => set("phone", formatUzPhone(e.target.value))} inputMode="tel" placeholder="+998 90 123 45 67" />
           </Field>
 
           <Field label="Guruh">

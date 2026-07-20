@@ -890,6 +890,14 @@ export interface PaymentAlerts {
     attended: number;
   }[];
 }
+export async function getBillingSettings(): Promise<{ graceLessons: number }> {
+  const res = await api.get("/finance/settings");
+  return { graceLessons: res.data?.graceLessons ?? 3 };
+}
+export async function updateBillingSettings(graceLessons: number): Promise<void> {
+  await api.put("/finance/settings", { graceLessons });
+}
+
 export async function getPaymentAlerts(): Promise<PaymentAlerts> {
   const res = await api.get("/finance/alerts");
   return {

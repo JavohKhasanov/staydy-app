@@ -6,6 +6,7 @@ import { Banknote, Loader2 } from "lucide-react";
 import { extractApiError } from "@/lib/api";
 import {
   createInvoice,
+  getBillingSettings,
   getGroupFinance,
   getStudentFinance,
   recordPayment,
@@ -26,13 +27,9 @@ import { Label } from "@/components/ui/label";
 const money = (n: number) => n.toLocaleString("uz-UZ").replace(/,/g, " ") + " so'm";
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
-// A new student may attend a few sessions before paying; past this count with no invoice we
-// flag them (center-configurable later).
-const GRACE_LESSONS = 3;
-
 type Status = "paid" | "partial" | "unpaid" | "none" | "overdue";
-function statusOf(r: GroupFinanceRow): Status {
-  if (r.invoiced === 0) return r.attended >= GRACE_LESSONS ? "overdue" : "none";
+function statusOf(r: GroupFinanceRow, grace: number): Status {
+  if (r.invoiced === 0) return r.attended >= grace ? "overdue" : "none";
   if (r.paid >= r.invoiced) return "paid";
   if (r.paid > 0) return "partial";
   return "unpaid";
@@ -61,6 +58,8 @@ export function GroupPayments({
     queryKey: ["group-finance", groupId, month],
     queryFn: () => getGroupFinance(groupId, month),
   });
+  const settingsQ = useQuery({ queryKey: ["billing-settings"], queryFn: getBillingSettings });
+  const grace = settingsQ.data?.graceLessons ?? 3;
   const rows = q.data?.students ?? [];
   const totals = rows.reduce(
     (a, r) => ({ invoiced: a.invoiced + r.invoiced, paid: a.paid + r.paid }),
@@ -102,7 +101,7 @@ export function GroupPayments({
       {rows.length > 0 && (
         <div className="divide-y divide-slate-100">
           {rows.map((r) => {
-            const st = statusOf(r);
+            const st = statusOf(r, grace);
             const ui = STATUS_UI[st];
             return (
               <div key={r.studentId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
@@ -216,11 +215,15 @@ function CollectDialog({
             <Input
               type="number"
               min="1"
+              max={row.invoiced > 0 ? remaining : undefined}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
               autoFocus
             />
+            {row.invoiced > 0 && Number(amount) > remaining && (
+              <p className="mt-1 text-xs text-rose-600">Qoldiqdan oshmasin: {money(remaining)}</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-slate-600">Usul</Label>

@@ -7,6 +7,8 @@ import { Plus, Loader2, X } from "lucide-react";
 import { extractApiError } from "@/lib/api";
 import {
   createBranch,
+  getBillingSettings,
+  updateBillingSettings,
   createObstacleOption,
   createRoom,
   deleteBranch,
@@ -24,6 +26,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Sozlamalar — Staydy" }] }),
@@ -37,6 +40,7 @@ function SettingsPage() {
       <div className="space-y-6">
         <BranchesCard />
         <RoomsCard />
+        <BillingRulesCard />
         <ObstacleOptionsCard />
       </div>
     </div>
@@ -418,6 +422,60 @@ function ObstacleOptionsCard() {
             </ul>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+// BillingRulesCard: center billing rules — how many attended sessions before the missing-invoice
+// flag fires ("N darsgacha to'lovsiz qatnashish mumkin").
+function BillingRulesCard() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["billing-settings"], queryFn: getBillingSettings });
+  const [val, setVal] = useState<string | null>(null);
+  const current = val ?? String(q.data?.graceLessons ?? 3);
+
+  const save = useMutation({
+    mutationFn: () => updateBillingSettings(Number(current)),
+    onSuccess: () => {
+      toast.success("Saqlandi");
+      qc.invalidateQueries({ queryKey: ["billing-settings"] });
+      qc.invalidateQueries({ queryKey: ["payment-alerts"] });
+      setVal(null);
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm max-w-2xl">
+      <div className="px-5 py-4 border-b border-slate-200">
+        <h2 className="text-sm font-semibold text-slate-900">To'lov mezonlari</h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Yangi o'quvchi nechta darsgacha to'lovsiz qatnashishi mumkin. Shundan oshsa guruh
+          to'lovlarida va bildirishnomalarda "To'lov kutilmoqda" belgisi chiqadi.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 p-5">
+        <div>
+          <Label className="text-xs font-medium text-slate-600">To'lovsiz darslar soni</Label>
+          <Input
+            type="number"
+            min="0"
+            max="30"
+            value={current}
+            onChange={(e) => setVal(e.target.value)}
+            className="mt-1 w-32"
+          />
+        </div>
+        <Button
+          onClick={() => save.mutate()}
+          disabled={save.isPending || val === null}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          <span className={save.isPending ? "ml-1.5" : ""}>Saqlash</span>
+        </Button>
       </div>
     </div>
   );

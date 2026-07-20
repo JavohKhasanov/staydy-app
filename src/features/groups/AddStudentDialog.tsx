@@ -5,6 +5,7 @@ import { Loader2, Search, UserPlus } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
 import { addGroupMember, createStudent, listStudents } from "@/lib/resources";
+import { formatUzPhone, stripPhone } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +32,7 @@ export function AddStudentDialog({
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [newName, setNewName] = useState("");
-  const [newPhone, setNewPhone] = useState("");
+  const [newPhone, setNewPhone] = useState("+998 ");
   const studentsQ = useQuery({ queryKey: ["students"], queryFn: listStudents });
 
   const term = q.trim().toLowerCase();
@@ -59,13 +60,13 @@ export function AddStudentDialog({
   // (inherits the group's branch).
   const createAndAdd = useMutation({
     mutationFn: async () => {
-      const id = await createStudent({ fullName: newName.trim(), phone: newPhone.trim(), branchId });
+      const id = await createStudent({ fullName: newName.trim(), phone: stripPhone(newPhone), branchId });
       await addGroupMember(groupId, id);
     },
     onSuccess: () => {
       toast.success("Yangi talaba yaratildi va guruhga qo'shildi");
       setNewName("");
-      setNewPhone("");
+      setNewPhone("+998 ");
       invalidate();
     },
     onError: (e) => toast.error(extractApiError(e)),
@@ -144,9 +145,10 @@ export function AddStudentDialog({
             />
             <Input
               value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-              placeholder="Telefon"
-              className="w-40 bg-white"
+              onChange={(e) => setNewPhone(formatUzPhone(e.target.value))}
+              inputMode="tel"
+              placeholder="+998 90 123 45 67"
+              className="w-44 bg-white"
             />
             <Button
               type="submit"
