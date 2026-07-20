@@ -181,7 +181,7 @@ function GroupDetailPage() {
 
       {editOpen && g && <GroupDialog open onOpenChange={(o) => !o && setEditOpen(false)} group={g} />}
       {addOpen && g && (
-        <AddStudentDialog groupId={g.id} groupName={g.name} onClose={() => setAddOpen(false)} />
+        <AddStudentDialog groupId={g.id} groupName={g.name} branchId={g.branchId} onClose={() => setAddOpen(false)} />
       )}
     </div>
   );

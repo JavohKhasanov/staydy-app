@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Loader2, Search, UserPlus } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { assignStudentGroup, listStudents } from "@/lib/resources";
+import { assignStudentGroup, createStudent, listStudents } from "@/lib/resources";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,14 +20,18 @@ import { Input } from "@/components/ui/input";
 export function AddStudentDialog({
   groupId,
   groupName,
+  branchId,
   onClose,
 }: {
   groupId: string;
   groupName: string;
+  branchId?: string;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
   const studentsQ = useQuery({ queryKey: ["students"], queryFn: listStudents });
 
   const term = q.trim().toLowerCase();
@@ -36,13 +40,33 @@ export function AddStudentDialog({
     .filter((s) => !term || s.fullName?.toLowerCase().includes(term) || s.phone?.includes(term))
     .slice(0, 30);
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["students"] });
+    qc.invalidateQueries({ queryKey: ["group-students"] });
+    qc.invalidateQueries({ queryKey: ["group-finance"] });
+  };
+
   const add = useMutation({
     mutationFn: (studentId: string) => assignStudentGroup(studentId, groupId),
     onSuccess: () => {
       toast.success("Talaba guruhga qo'shildi");
-      qc.invalidateQueries({ queryKey: ["students"] });
-      qc.invalidateQueries({ queryKey: ["group-students"] });
-      qc.invalidateQueries({ queryKey: ["group-finance"] });
+      invalidate();
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  // Walk-in flow: create a brand-new student and attach them to this group in one go
+  // (inherits the group's branch).
+  const createAndAdd = useMutation({
+    mutationFn: async () => {
+      const id = await createStudent({ fullName: newName.trim(), phone: newPhone.trim(), branchId });
+      await assignStudentGroup(id, groupId);
+    },
+    onSuccess: () => {
+      toast.success("Yangi talaba yaratildi va guruhga qo'shildi");
+      setNewName("");
+      setNewPhone("");
+      invalidate();
     },
     onError: (e) => toast.error(extractApiError(e)),
   });
@@ -98,6 +122,49 @@ export function AddStudentDialog({
               </Button>
             </div>
           ))}
+        </div>
+
+        <div className="rounded-lg border border-dashed border-indigo-200 bg-indigo-50/40 p-3">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-600">
+            Yoki yangi talaba yarating
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (newName.trim()) createAndAdd.mutate();
+            }}
+            className="flex flex-wrap gap-2"
+          >
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="To'liq ism *"
+              required
+              className="flex-1 min-w-36 bg-white"
+            />
+            <Input
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              placeholder="Telefon"
+              className="w-40 bg-white"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={createAndAdd.isPending || !newName.trim()}
+              className="h-10 bg-indigo-600 hover:bg-indigo-700 shrink-0"
+            >
+              {createAndAdd.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
+              <span className="ml-1.5">Yaratish</span>
+            </Button>
+          </form>
+          <p className="mt-1.5 text-xs text-slate-500">
+            Qolgan ma'lumotlarni keyin talaba sahifasida to'ldirish mumkin.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
