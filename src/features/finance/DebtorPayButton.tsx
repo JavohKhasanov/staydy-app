@@ -33,12 +33,14 @@ export function DebtorPayButton({
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(balance));
   const [method, setMethod] = useState("cash");
+  const over = Number(amount) > balance;
   const qc = useQueryClient();
 
   const m = useMutation({
     mutationFn: async () => {
       let left = Number(amount);
       if (!left || left <= 0) throw new Error("Summani kiriting");
+      if (left > balance) throw new Error(`Summa qarzdan (${money(balance)}) oshmasligi kerak`);
       const fin = await getStudentFinance(studentId);
       const openInvoices = (fin.invoices ?? [])
         .filter((i) => i.paidAmount < i.amount)
@@ -59,7 +61,7 @@ export function DebtorPayButton({
       qc.invalidateQueries({ queryKey: ["group-finance"] });
       setOpen(false);
     },
-    onError: (e) => toast.error(e instanceof Error && e.message ? e.message : extractApiError(e)),
+    onError: (e) => toast.error(extractApiError(e)),
   });
 
   return (
@@ -88,11 +90,15 @@ export function DebtorPayButton({
                 <Input
                   type="number"
                   min="1"
+                  max={balance}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                   autoFocus
                 />
+                {over && (
+                  <p className="mt-1 text-xs text-rose-600">Qarzdan oshmasin: {money(balance)}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-slate-600">Usul</Label>
@@ -121,7 +127,7 @@ export function DebtorPayButton({
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Bekor qilish
                 </Button>
-                <Button type="submit" disabled={m.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button type="submit" disabled={m.isPending || over} className="bg-indigo-600 hover:bg-indigo-700">
                   {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Qabul qilish
                 </Button>

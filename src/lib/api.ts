@@ -80,19 +80,32 @@ api.interceptors.response.use(
   },
 );
 
+// Uzbek fallbacks by HTTP status, used when the server sent no readable detail (so users never
+// see axios's English "Request failed with status code NNN").
+const STATUS_UZ: Record<number, string> = {
+  400: "So'rov noto'g'ri.",
+  401: "Sessiya tugadi — qayta kiring.",
+  403: "Ruxsat yo'q.",
+  404: "Topilmadi.",
+  409: "Ziddiyat: bu ma'lumot allaqachon mavjud.",
+  422: "Ma'lumotlar noto'g'ri to'ldirilgan.",
+  500: "Serverda xatolik yuz berdi.",
+  502: "Server javob bermayapti — birozdan so'ng urinib ko'ring.",
+  503: "Xizmat vaqtincha ishlamayapti.",
+};
+
 export function extractApiError(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
       | { detail?: string; title?: string; message?: string }
       | undefined;
-    return (
-      data?.detail ||
-      data?.message ||
-      data?.title ||
-      err.message ||
-      "Noma'lum xatolik"
-    );
+    const detail = data?.detail || data?.message || data?.title;
+    if (detail) return detail;
+    const status = err.response?.status;
+    if (status && STATUS_UZ[status]) return STATUS_UZ[status];
+    if (err.code === "ERR_NETWORK") return "Internetga ulanishda muammo.";
+    return "Noma'lum xatolik yuz berdi.";
   }
-  if (err instanceof Error) return err.message;
-  return "Noma'lum xatolik";
+  if (err instanceof Error && err.message) return err.message;
+  return "Noma'lum xatolik yuz berdi.";
 }

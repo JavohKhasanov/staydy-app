@@ -156,14 +156,18 @@ function CollectDialog({
 }) {
   const qc = useQueryClient();
   const remaining = row.invoiced - row.paid;
-  const defaultAmount = row.invoiced > 0 ? remaining : (coursePrice ?? 0);
-  const [amount, setAmount] = useState(defaultAmount > 0 ? String(defaultAmount) : "");
+  // Cap: for an open invoice it's the remaining balance; for a new (no-invoice) student it's the
+  // course price — you can't collect more than the month's fee.
+  const cap = row.invoiced > 0 ? remaining : coursePrice ?? 0;
+  const [amount, setAmount] = useState(cap > 0 ? String(cap) : "");
   const [method, setMethod] = useState("cash");
+  const over = cap > 0 && Number(amount) > cap;
 
   const m = useMutation({
     mutationFn: async () => {
       const sum = Number(amount);
       if (!sum || sum <= 0) throw new Error("Summani kiriting");
+      if (cap > 0 && sum > cap) throw new Error(`Summa ${money(cap)} dan oshmasligi kerak`);
       if (row.invoiced === 0) {
         // No invoice for this month yet — create one (course price or the entered sum).
         const inv = await createInvoice(row.studentId, {
@@ -190,7 +194,7 @@ function CollectDialog({
       qc.invalidateQueries({ queryKey: ["finance-summary"] });
       onClose();
     },
-    onError: (e) => toast.error(e instanceof Error && e.message ? e.message : extractApiError(e)),
+    onError: (e) => toast.error(extractApiError(e)),
   });
 
   return (
@@ -215,14 +219,16 @@ function CollectDialog({
             <Input
               type="number"
               min="1"
-              max={row.invoiced > 0 ? remaining : undefined}
+              max={cap > 0 ? cap : undefined}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
               autoFocus
             />
-            {row.invoiced > 0 && Number(amount) > remaining && (
-              <p className="mt-1 text-xs text-rose-600">Qoldiqdan oshmasin: {money(remaining)}</p>
+            {over && (
+              <p className="mt-1 text-xs text-rose-600">
+                {row.invoiced > 0 ? "Qoldiqdan" : "Kurs narxidan"} oshmasin: {money(cap)}
+              </p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -250,7 +256,7 @@ function CollectDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={m.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button type="submit" disabled={m.isPending || over} className="bg-indigo-600 hover:bg-indigo-700">
               {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Qabul qilish
             </Button>
