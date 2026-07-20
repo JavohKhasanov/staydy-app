@@ -207,7 +207,18 @@ export function GroupDialog({
               <Input type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
             </Field>
             <Field label="Xona">
-              <Select value={form.roomId} onValueChange={(v) => set("roomId", v)}>
+              <Select
+                value={form.roomId}
+                onValueChange={(v) => {
+                  const room = roomList.find((r) => r.id === v);
+                  setForm((f) => ({
+                    ...f,
+                    roomId: v,
+                    // Empty capacity inherits the room's seat count.
+                    capacity: f.capacity || (room?.capacity ? String(room.capacity) : f.capacity),
+                  }));
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
@@ -225,6 +236,15 @@ export function GroupDialog({
           <div className="grid grid-cols-2 gap-3">
             <Field label="Sig'im">
               <Input type="number" min="0" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} placeholder="15" />
+              {(() => {
+                const room = roomList.find((r) => r.id === form.roomId);
+                const cap = Number(form.capacity);
+                return room && room.capacity > 0 && cap > room.capacity ? (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Diqqat: {room.name} sig'imi {room.capacity} o'rin
+                  </p>
+                ) : null;
+              })()}
             </Field>
             <Field label="Yo'nalish">
               <Input value={form.direction} onChange={(e) => set("direction", e.target.value)} placeholder="IT" />

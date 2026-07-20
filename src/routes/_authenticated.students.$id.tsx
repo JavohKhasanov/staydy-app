@@ -28,7 +28,7 @@ import { EnrollmentsSection } from "@/features/students/EnrollmentsSection";
 import { FinanceSection } from "@/features/students/FinanceSection";
 import { StudentEditDialog } from "@/features/students/StudentEditDialog";
 import { ActivityTimeline } from "@/features/activities/ActivityTimeline";
-import { CONTACT_LOG_ENABLED, MENTOR_ENABLED } from "@/lib/flags";
+import { CONTACT_LOG_ENABLED, ENROLLMENTS_ENABLED, MENTOR_ENABLED } from "@/lib/flags";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge } from "@/components/RiskBadge";
 import { TelegramLinkButton } from "@/features/students/TelegramLinkButton";
@@ -375,7 +375,7 @@ function ProfileTab({ student }: { student: Student }) {
       </div>
       {!isTeacher && <GroupAssign student={student} />}
       </div>
-      {!isTeacher && <EnrollmentsSection studentId={student.id} />}
+      {!isTeacher && ENROLLMENTS_ENABLED && <EnrollmentsSection studentId={student.id} />}
       {!isTeacher && <FinanceSection studentId={student.id} />}
       {!isTeacher && CONTACT_LOG_ENABLED && (
         <ActivityTimeline subjectType="student" subjectId={student.id} />
