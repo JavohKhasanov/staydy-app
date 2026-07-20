@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { NotificationBell } from "@/components/NotificationBell";
 import { BranchSelector } from "@/features/branches/BranchContext";
 
 type NavItem = {
@@ -180,6 +181,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex-1 max-w-md mx-auto md:mx-6">
             {user?.role !== "teacher" && <GlobalSearch />}
           </div>
+          {user?.role !== "teacher" && <NotificationBell />}
           {user?.role !== "teacher" && <BranchSelector />}
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 rounded-md px-2 py-1">
             <Globe className="h-3.5 w-3.5" />

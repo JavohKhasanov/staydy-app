@@ -171,6 +171,7 @@ function CollectDialog({
           amount: coursePrice && coursePrice > 0 ? coursePrice : sum,
           period: month,
           groupId,
+          dueDate: `${month}-10`,
         });
         await recordPayment(inv.id, { amount: sum, method });
       } else {

@@ -873,6 +873,31 @@ export async function getFinanceSummary(): Promise<FinanceSummary> {
   return res.data;
 }
 
+export interface PaymentAlerts {
+  overdueInvoices: {
+    studentId: string;
+    studentName: string;
+    groupId?: string;
+    balance: number;
+    dueDate?: string;
+    period: string;
+  }[];
+  graceOverdue: {
+    studentId: string;
+    studentName: string;
+    groupId: string;
+    groupName: string;
+    attended: number;
+  }[];
+}
+export async function getPaymentAlerts(): Promise<PaymentAlerts> {
+  const res = await api.get("/finance/alerts");
+  return {
+    overdueInvoices: res.data?.overdueInvoices ?? [],
+    graceOverdue: res.data?.graceOverdue ?? [],
+  };
+}
+
 export async function getDebtors(): Promise<Debtor[]> {
   const res = await api.get("/finance/debtors");
   return unwrapList<Debtor>(res.data);

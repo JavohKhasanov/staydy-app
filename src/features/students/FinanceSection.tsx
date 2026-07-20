@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Loader2, Plus, RotateCcw, Trash2, Wallet } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import {
+import { listGroups,
   createInvoice,
   deleteInvoice,
   deletePayment,
@@ -54,6 +54,9 @@ export function FinanceSection({ studentId }: { studentId: string }) {
   const [payFor, setPayFor] = useState<Invoice | null>(null);
   const [refundFor, setRefundFor] = useState<Invoice | null>(null);
 
+  const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
+  const groupName = (id?: string) =>
+    id ? groupsQ.data?.find((g) => g.id === id)?.name ?? "—" : "—";
   const finance = useQuery({
     queryKey: ["finance", studentId],
     queryFn: () => getStudentFinance(studentId),
@@ -126,6 +129,7 @@ export function FinanceSection({ studentId }: { studentId: string }) {
             <thead className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
               <tr>
                 <th className="py-2 pr-3 font-medium">Davr</th>
+                <th className="py-2 pr-3 font-medium">Guruh</th>
                 <th className="py-2 pr-3 font-medium text-right">Summa</th>
                 <th className="py-2 pr-3 font-medium text-right">Qoldiq</th>
                 <th className="py-2 pr-3 font-medium">Holat</th>
@@ -142,6 +146,7 @@ export function FinanceSection({ studentId }: { studentId: string }) {
                 return (
                   <tr key={iv.id}>
                     <td className="py-2 pr-3 text-slate-800">{iv.period || "—"}</td>
+                    <td className="py-2 pr-3 text-slate-600">{groupName(iv.groupId)}</td>
                     <td className="py-2 pr-3 text-right tabular-nums text-slate-700">
                       {money(iv.amount)}
                     </td>
