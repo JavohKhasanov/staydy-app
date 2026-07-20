@@ -168,24 +168,21 @@ function CollectDialog({
       const sum = Number(amount);
       if (!sum || sum <= 0) throw new Error("Summani kiriting");
       if (cap > 0 && sum > cap) throw new Error(`Summa ${money(cap)} dan oshmasligi kerak`);
-      if (row.invoiced === 0) {
-        // No invoice for this month yet — create one (course price or the entered sum).
-        const inv = await createInvoice(row.studentId, {
+      // Always reuse this group+month's open invoice; only create one when none exists. This
+      // avoids leaving orphan invoices when a collect is retried.
+      const fin = await getStudentFinance(row.studentId);
+      let open = (fin.invoices ?? []).find(
+        (i) => i.period === month && i.paidAmount < i.amount && (!i.groupId || i.groupId === groupId),
+      );
+      if (!open) {
+        open = await createInvoice(row.studentId, {
           amount: coursePrice && coursePrice > 0 ? coursePrice : sum,
           period: month,
           groupId,
           dueDate: `${month}-10`,
         });
-        await recordPayment(inv.id, { amount: sum, method });
-      } else {
-        // Pay against this month's open invoice.
-        const fin = await getStudentFinance(row.studentId);
-        const open = (fin.invoices ?? []).find(
-          (i) => i.period === month && i.paidAmount < i.amount && (!i.groupId || i.groupId === groupId),
-        );
-        if (!open) throw new Error("Ochiq hisob-faktura topilmadi");
-        await recordPayment(open.id, { amount: sum, method });
       }
+      await recordPayment(open.id, { amount: sum, method });
     },
     onSuccess: () => {
       toast.success("To'lov qabul qilindi");
