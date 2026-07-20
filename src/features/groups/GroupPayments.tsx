@@ -26,9 +26,13 @@ import { Label } from "@/components/ui/label";
 const money = (n: number) => n.toLocaleString("uz-UZ").replace(/,/g, " ") + " so'm";
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
-type Status = "paid" | "partial" | "unpaid" | "none";
+// A new student may attend a few sessions before paying; past this count with no invoice we
+// flag them (center-configurable later).
+const GRACE_LESSONS = 3;
+
+type Status = "paid" | "partial" | "unpaid" | "none" | "overdue";
 function statusOf(r: GroupFinanceRow): Status {
-  if (r.invoiced === 0) return "none";
+  if (r.invoiced === 0) return r.attended >= GRACE_LESSONS ? "overdue" : "none";
   if (r.paid >= r.invoiced) return "paid";
   if (r.paid > 0) return "partial";
   return "unpaid";
@@ -38,6 +42,7 @@ const STATUS_UI: Record<Status, { label: string; cls: string }> = {
   partial: { label: "Qisman", cls: "bg-amber-50 text-amber-700" },
   unpaid: { label: "Qarzdor", cls: "bg-rose-50 text-rose-600" },
   none: { label: "Hisob yo'q", cls: "bg-slate-100 text-slate-500" },
+  overdue: { label: "To'lov kutilmoqda", cls: "bg-rose-600 text-white" },
 };
 
 // GroupPayments is the group page's fee roster: month picker + per-student paid/partial/unpaid
@@ -108,6 +113,7 @@ export function GroupPayments({
                   </span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ui.cls}`}>
                     {ui.label}
+                    {st === "overdue" ? ` · ${r.attended} dars` : ""}
                   </span>
                   {st !== "paid" && (
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setPaying(r)}>
@@ -164,13 +170,14 @@ function CollectDialog({
         const inv = await createInvoice(row.studentId, {
           amount: coursePrice && coursePrice > 0 ? coursePrice : sum,
           period: month,
+          groupId,
         });
         await recordPayment(inv.id, { amount: sum, method });
       } else {
         // Pay against this month's open invoice.
         const fin = await getStudentFinance(row.studentId);
         const open = (fin.invoices ?? []).find(
-          (i) => i.period === month && i.paidAmount < i.amount,
+          (i) => i.period === month && i.paidAmount < i.amount && (!i.groupId || i.groupId === groupId),
         );
         if (!open) throw new Error("Ochiq hisob-faktura topilmadi");
         await recordPayment(open.id, { amount: sum, method });

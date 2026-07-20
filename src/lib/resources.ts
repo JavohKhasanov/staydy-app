@@ -750,6 +750,7 @@ export async function deleteEnrollment(id: string): Promise<void> {
 export interface Invoice {
   id: string;
   studentId: string;
+  groupId?: string;
   amount: number;
   paidAmount: number;
   balance: number;
@@ -815,6 +816,7 @@ export interface GroupFinanceRow {
   name: string;
   invoiced: number;
   paid: number;
+  attended: number;
 }
 export async function getGroupFinance(
   groupId: string,
@@ -829,7 +831,14 @@ export async function getGroupFinance(
 
 export async function createInvoice(
   studentId: string,
-  body: { amount: number; dueDate?: string; period?: string; note?: string; enrollmentId?: string },
+  body: {
+    amount: number;
+    groupId?: string;
+    dueDate?: string;
+    period?: string;
+    note?: string;
+    enrollmentId?: string;
+  },
 ): Promise<Invoice> {
   const res = await api.post<Invoice>(`/students/${studentId}/invoices`, body);
   return res.data;
