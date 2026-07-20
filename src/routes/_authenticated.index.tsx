@@ -17,12 +17,14 @@ import {
   getDebtors,
   getFinanceSummary,
   listLeads,
-  listLessons,
+  listGroups,
+  listTeachers,
 } from "@/lib/resources";
 import type { DashboardData } from "@/lib/types";
 import { money } from "@/features/students/FinanceSection";
 import { STAGE_OPTIONS } from "@/features/leads/LeadDialog";
 import { LEADS_ENABLED } from "@/lib/flags";
+import { WEEKDAYS, parseDays } from "@/lib/weekdays";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge } from "@/components/RiskBadge";
 import {
@@ -112,14 +114,21 @@ function DashboardContent({ data }: { data: DashboardData }) {
   const finance = useQuery({ queryKey: ["finance-summary"], queryFn: getFinanceSummary });
   const debtors = useQuery({ queryKey: ["debtors"], queryFn: getDebtors });
   const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
-  const lessons = useQuery({ queryKey: ["lessons"], queryFn: () => listLessons() });
+  const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
+  const teachersQ = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
 
   const leadCounts = STAGE_OPTIONS.map((s) => ({
     ...s,
     count: (leads.data ?? []).filter((l) => l.stage === s.key).length,
   }));
   const topDebtors = (debtors.data ?? []).slice(0, 5);
-  const upcoming = (lessons.data ?? []).slice(0, 6);
+  // Today's sessions, generated from each group's recurring schedule (same source as Jadval).
+  const todayCode = WEEKDAYS[(new Date().getDay() + 6) % 7].code;
+  const teacherName = (id?: string) => teachersQ.data?.find((t) => t.id === id)?.fullName;
+  const todaysSessions = (groupsQ.data ?? [])
+    .filter((g) => parseDays(g.scheduleDays).includes(todayCode))
+    .sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? ""))
+    .slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -196,26 +205,34 @@ function DashboardContent({ data }: { data: DashboardData }) {
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <CalendarDays className="h-4 w-4 text-sky-600" /> Yaqin darslar
+              <CalendarDays className="h-4 w-4 text-sky-600" /> Bugungi darslar
             </h2>
             <Link to="/schedule" className="text-xs text-indigo-600 hover:underline">
               Jadval →
             </Link>
           </div>
-          {upcoming.length ? (
-            <ul className="space-y-2">
-              {upcoming.map((l) => (
-                <li key={l.id} className="flex items-center gap-3 text-sm">
+          {todaysSessions.length ? (
+            <ul className="space-y-2 max-h-80 overflow-y-auto">
+              {todaysSessions.map((g) => (
+                <li key={g.id} className="flex items-center gap-3 text-sm">
                   <span className="text-xs tabular-nums text-slate-500 shrink-0 w-24">
-                    {l.date}
-                    {l.startTime ? ` ${l.startTime}` : ""}
+                    {g.startTime ? `${g.startTime}${g.endTime ? `–${g.endTime}` : ""}` : "—"}
                   </span>
-                  <span className="text-slate-800 truncate">{l.topic || "Dars"}</span>
+                  <Link
+                    to="/groups/$id"
+                    params={{ id: g.id }}
+                    className="text-slate-800 truncate hover:text-indigo-600 font-medium"
+                  >
+                    {g.name}
+                  </Link>
+                  {teacherName(g.teacherId) && (
+                    <span className="text-xs text-slate-400 truncate">{teacherName(g.teacherId)}</span>
+                  )}
                 </li>
               ))}
             </ul>
           ) : (
-            <EmptyBlock title="Dars yo'q" />
+            <EmptyBlock title="Bugun dars yo'q" />
           )}
         </div>
       </div>
