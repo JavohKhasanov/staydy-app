@@ -595,6 +595,12 @@ export async function deleteStaff(id: string): Promise<void> {
   await api.delete(`/staff/${id}`);
 }
 
+// --- account (self) ---
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await api.post("/me/change-password", { currentPassword, newPassword });
+}
+
 // --- homework (read from the bundled student detail; record like attendance) ---
 
 export async function listHomework(id: string): Promise<Homework[]> {

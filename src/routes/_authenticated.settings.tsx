@@ -6,6 +6,7 @@ import { Plus, Loader2, X } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
 import {
+  changePassword,
   createBranch,
   getBillingSettings,
   updateBillingSettings,
@@ -42,6 +43,7 @@ function SettingsPage() {
         <RoomsCard />
         <BillingRulesCard />
         <ObstacleOptionsCard />
+        <PasswordCard />
       </div>
     </div>
   );
@@ -427,6 +429,85 @@ function ObstacleOptionsCard() {
   );
 }
 
+
+// PasswordCard lets the signed-in user change their own login password.
+function PasswordCard() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const save = useMutation({
+    mutationFn: () => changePassword(current, next),
+    onSuccess: () => {
+      toast.success("Parol o'zgartirildi");
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  const mismatch = confirm.length > 0 && next !== confirm;
+  const canSave = current.length > 0 && next.length >= 8 && next === confirm;
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm max-w-2xl">
+      <div className="px-5 py-4 border-b border-slate-200">
+        <h2 className="text-sm font-semibold text-slate-900">Parolni o'zgartirish</h2>
+        <p className="text-sm text-slate-500 mt-1">O'z hisobingiz parolini yangilang (kamida 8 belgi).</p>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSave) save.mutate();
+        }}
+        className="grid gap-3 p-5 sm:max-w-sm"
+      >
+        <div>
+          <Label className="text-xs font-medium text-slate-600">Joriy parol</Label>
+          <Input
+            type="password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            autoComplete="current-password"
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-xs font-medium text-slate-600">Yangi parol</Label>
+          <Input
+            type="password"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="kamida 8 belgi"
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-xs font-medium text-slate-600">Yangi parolni tasdiqlang</Label>
+          <Input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="new-password"
+            className="mt-1"
+          />
+          {mismatch && <p className="mt-1 text-xs text-rose-600">Parollar mos kelmayapti</p>}
+        </div>
+        <Button
+          type="submit"
+          disabled={!canSave || save.isPending}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white justify-self-start"
+        >
+          {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+          Saqlash
+        </Button>
+      </form>
+    </div>
+  );
+}
 
 // BillingRulesCard: center billing rules — how many attended sessions before the missing-invoice
 // flag fires ("N darsgacha to'lovsiz qatnashish mumkin").
