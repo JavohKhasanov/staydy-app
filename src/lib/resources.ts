@@ -942,6 +942,17 @@ export interface SalaryRule {
   rate: number;
   base: number;
 }
+export interface SalaryGroupBasis {
+  groupId: string;
+  groupName: string;
+  kind: SalaryKind;
+  rate: number;
+  override: boolean;
+  students: number;
+  lessons: number;
+  revenue: number;
+  amount: number;
+}
 export interface SalaryBasis {
   kind: SalaryKind;
   rate: number;
@@ -949,7 +960,13 @@ export interface SalaryBasis {
   lessons: number;
   students: number;
   revenue: number;
+  groups: SalaryGroupBasis[];
   gross: number;
+}
+export interface SalaryGroupRuleInput {
+  groupId: string;
+  kind: SalaryKind;
+  rate: number;
 }
 export interface SalarySlip {
   id: string;
@@ -972,7 +989,7 @@ export async function getSalaryRule(teacherId: string): Promise<SalaryRule> {
 }
 export async function setSalaryRule(
   teacherId: string,
-  body: { kind: SalaryKind; rate: number; base: number },
+  body: { kind: SalaryKind; rate: number; base: number; groups?: SalaryGroupRuleInput[] },
 ): Promise<void> {
   await api.put(`/teachers/${teacherId}/salary-rule`, body);
 }
