@@ -555,6 +555,46 @@ export async function deleteTeacher(id: string): Promise<void> {
   await api.delete(`/teachers/${id}`);
 }
 
+// --- staff (administrators + finance) ---
+
+export type StaffRole = "center_admin" | "finance";
+export interface Staff {
+  id: string;
+  email: string;
+  fullName: string;
+  role: StaffRole;
+  createdAt?: string;
+}
+
+export async function listStaff(): Promise<Staff[]> {
+  const res = await api.get("/staff");
+  return unwrapList<Staff>(res.data);
+}
+
+export async function createStaff(form: {
+  fullName: string;
+  email: string;
+  password: string;
+  role: StaffRole;
+}): Promise<void> {
+  await api.post("/staff", form);
+}
+
+export async function updateStaff(
+  id: string,
+  form: { fullName: string; email: string; role: StaffRole },
+): Promise<void> {
+  await api.put(`/staff/${id}`, form);
+}
+
+export async function setStaffPassword(id: string, password: string): Promise<void> {
+  await api.put(`/staff/${id}/password`, { password });
+}
+
+export async function deleteStaff(id: string): Promise<void> {
+  await api.delete(`/staff/${id}`);
+}
+
 // --- homework (read from the bundled student detail; record like attendance) ---
 
 export async function listHomework(id: string): Promise<Homework[]> {

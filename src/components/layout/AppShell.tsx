@@ -12,6 +12,7 @@ import {
   Wallet,
   Coins,
   BarChart3,
+  UserCog,
   Plug,
   Settings,
   Menu,
@@ -53,6 +54,7 @@ const NAV: NavItem[] = [
   { to: "/schedule", label: "Jadval", icon: CalendarDays },
   { to: "/attendance", label: "Davomat", icon: CalendarCheck },
   { to: "/teachers", label: "Ustozlar", icon: GraduationCap },
+  { to: "/staff", label: "Xodimlar", icon: UserCog },
   { to: "/tasks", label: "Vazifalar", icon: ClipboardList },
   { to: "/finance", label: "Moliya", icon: Wallet },
   { to: "/salaries", label: "Maosh", icon: Coins },
@@ -69,12 +71,25 @@ const TEACHER_NAV: NavItem[] = [
   { to: "/me/attendance", label: "Davomat", icon: CalendarCheck },
 ];
 
+// Finance (moliya) sees only the money surfaces.
+const FINANCE_NAV: NavItem[] = [
+  { to: "/finance", label: "Moliya", icon: Wallet },
+  { to: "/salaries", label: "Maosh", icon: Coins },
+  { to: "/reports", label: "Hisobotlar", icon: BarChart3 },
+];
+
+function navFor(role?: string): NavItem[] {
+  if (role === "teacher") return TEACHER_NAV;
+  if (role === "finance") return FINANCE_NAV;
+  return NAV;
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, organization } = useSession();
-  const nav = user?.role === "teacher" ? TEACHER_NAV : NAV;
+  const nav = navFor(user?.role);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -182,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {user?.role !== "teacher" && <GlobalSearch />}
           </div>
           {user?.role !== "teacher" && <NotificationBell />}
-          {user?.role !== "teacher" && <BranchSelector />}
+          {user?.role !== "teacher" && user?.role !== "finance" && <BranchSelector />}
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 rounded-md px-2 py-1">
             <Globe className="h-3.5 w-3.5" />
             uz

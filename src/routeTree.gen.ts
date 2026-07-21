@@ -17,6 +17,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedIntegrationRouteImport } from './routes/_authenticated.integration'
 import { Route as AuthenticatedTeachersIndexRouteImport } from './routes/_authenticated.teachers.index'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index'
+import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated.staff.index'
 import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated.schedule.index'
 import { Route as AuthenticatedSalariesIndexRouteImport } from './routes/_authenticated.salaries.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated.reports.index'
@@ -74,6 +75,11 @@ const AuthenticatedStudentsIndexRoute =
     path: '/students/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
+  id: '/staff/',
+  path: '/staff/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedScheduleIndexRoute =
   AuthenticatedScheduleIndexRouteImport.update({
     id: '/schedule/',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/salaries/': typeof AuthenticatedSalariesIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
+  '/staff/': typeof AuthenticatedStaffIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teachers/': typeof AuthenticatedTeachersIndexRoute
   '/me/attendance/': typeof AuthenticatedMeAttendanceIndexRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/salaries': typeof AuthenticatedSalariesIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
+  '/staff': typeof AuthenticatedStaffIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teachers': typeof AuthenticatedTeachersIndexRoute
   '/me/attendance': typeof AuthenticatedMeAttendanceIndexRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/salaries/': typeof AuthenticatedSalariesIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
+  '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teachers/': typeof AuthenticatedTeachersIndexRoute
   '/_authenticated/me/attendance/': typeof AuthenticatedMeAttendanceIndexRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/salaries/'
     | '/schedule/'
+    | '/staff/'
     | '/students/'
     | '/teachers/'
     | '/me/attendance/'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/salaries'
     | '/schedule'
+    | '/staff'
     | '/students'
     | '/teachers'
     | '/me/attendance'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/'
     | '/_authenticated/salaries/'
     | '/_authenticated/schedule/'
+    | '/_authenticated/staff/'
     | '/_authenticated/students/'
     | '/_authenticated/teachers/'
     | '/_authenticated/me/attendance/'
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students/'
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/staff/': {
+      id: '/_authenticated/staff/'
+      path: '/staff'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof AuthenticatedStaffIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/schedule/': {
@@ -479,6 +498,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSalariesIndexRoute: typeof AuthenticatedSalariesIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
+  AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachersIndexRoute: typeof AuthenticatedTeachersIndexRoute
   AuthenticatedMeAttendanceIndexRoute: typeof AuthenticatedMeAttendanceIndexRoute
@@ -502,6 +522,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSalariesIndexRoute: AuthenticatedSalariesIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
+  AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachersIndexRoute: AuthenticatedTeachersIndexRoute,
   AuthenticatedMeAttendanceIndexRoute: AuthenticatedMeAttendanceIndexRoute,

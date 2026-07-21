@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Bell, Banknote, CalendarX2, Hourglass } from "lucide-react";
 
+import { authStore } from "@/lib/auth";
 import { getPaymentAlerts, listMissingAttendance } from "@/lib/resources";
 import {
   DropdownMenu,
@@ -17,11 +18,15 @@ const money = (n: number) => n.toLocaleString("uz-UZ").replace(/,/g, " ") + " so
 // sessions that have started but aren't fully marked, invoices past due, and students attending
 // without an invoice (grace passed). Refreshes every 5 minutes.
 export function NotificationBell() {
+  // Missing-attendance is an admin concern (the endpoint is admin-gated); the finance role only
+  // needs the payment alerts below.
+  const isAdmin = authStore.getUser()?.role !== "finance";
   const missingQ = useQuery({
     queryKey: ["attendance-missing"],
     queryFn: listMissingAttendance,
     refetchInterval: 5 * 60_000,
     staleTime: 0,
+    enabled: isAdmin,
   });
   const alertsQ = useQuery({
     queryKey: ["payment-alerts"],
