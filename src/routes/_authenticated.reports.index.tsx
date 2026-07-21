@@ -9,6 +9,7 @@ import {
   listStudents,
   listTeachers,
 } from "@/lib/resources";
+import { authStore } from "@/lib/auth";
 import { money } from "@/features/students/FinanceSection";
 import { STAGE_OPTIONS } from "@/features/leads/LeadDialog";
 import { LEADS_ENABLED } from "@/lib/flags";
@@ -34,7 +35,13 @@ function ReportsPage() {
   const groups = useQuery({ queryKey: ["groups"], queryFn: listGroups });
   const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
   const teachers = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
-  const finance = useQuery({ queryKey: ["finance", "summary"], queryFn: getFinanceSummary });
+  // The administrator (manager) doesn't see the center's income/profit; skip the finance summary.
+  const isManager = authStore.getUser()?.role === "manager";
+  const finance = useQuery({
+    queryKey: ["finance", "summary"],
+    queryFn: getFinanceSummary,
+    enabled: !isManager,
+  });
 
   const s = students.data ?? [];
   const g = groups.data ?? [];
@@ -85,17 +92,19 @@ function ReportsPage() {
     <div>
       <PageHeader title="Hisobotlar" description="Markaz ko'rsatkichlari — bir qarashda" />
 
-      {/* Finance KPIs */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-5">
-        <Kpi label="Oylik tushum" value={money(finance.data?.monthIncome ?? 0)} tint="text-emerald-700" />
-        <Kpi label="Oylik xarajat" value={money(finance.data?.monthExpense ?? 0)} tint="text-rose-700" />
-        <Kpi
-          label="Oylik foyda"
-          value={money(finance.data?.monthProfit ?? 0)}
-          tint={(finance.data?.monthProfit ?? 0) >= 0 ? "text-indigo-700" : "text-rose-700"}
-        />
-        <Kpi label="Umumiy qarz" value={money(finance.data?.totalDebt ?? 0)} tint="text-amber-700" />
-      </div>
+      {/* Finance KPIs — hidden for the administrator (manager) */}
+      {!isManager && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-5">
+          <Kpi label="Oylik tushum" value={money(finance.data?.monthIncome ?? 0)} tint="text-emerald-700" />
+          <Kpi label="Oylik xarajat" value={money(finance.data?.monthExpense ?? 0)} tint="text-rose-700" />
+          <Kpi
+            label="Oylik foyda"
+            value={money(finance.data?.monthProfit ?? 0)}
+            tint={(finance.data?.monthProfit ?? 0) >= 0 ? "text-indigo-700" : "text-rose-700"}
+          />
+          <Kpi label="Umumiy qarz" value={money(finance.data?.totalDebt ?? 0)} tint="text-amber-700" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Lead conversion (hidden until amoCRM) */}

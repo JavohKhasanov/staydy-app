@@ -78,10 +78,20 @@ const FINANCE_NAV: NavItem[] = [
   { to: "/reports", label: "Hisobotlar", icon: BarChart3 },
 ];
 
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: "Super admin",
+  center_admin: "Direktor",
+  manager: "Administrator",
+  finance: "Moliya",
+  teacher: "O'qituvchi",
+};
+
 function navFor(role?: string): NavItem[] {
   if (role === "teacher") return TEACHER_NAV;
   if (role === "finance") return FINANCE_NAV;
-  return NAV;
+  // Administrator (manager): full operational nav minus salaries and staff management.
+  if (role === "manager") return NAV.filter((n) => n.to !== "/salaries" && n.to !== "/staff");
+  return NAV; // direktor (center_admin) / super_admin
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -219,7 +229,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{user?.fullName ?? "Foydalanuvchi"}</span>
                   <span className="text-xs text-slate-500 font-normal">
-                    {organization?.name ?? ""}
+                    {[ROLE_LABEL[user?.role ?? ""], organization?.name].filter(Boolean).join(" · ")}
                   </span>
                 </div>
               </DropdownMenuLabel>

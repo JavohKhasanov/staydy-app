@@ -34,7 +34,8 @@ export const Route = createFileRoute("/_authenticated/staff/")({
 });
 
 const ROLE_UI: Record<StaffRole, { label: string; cls: string }> = {
-  center_admin: { label: "Administrator", cls: "bg-indigo-50 text-indigo-700" },
+  center_admin: { label: "Direktor", cls: "bg-violet-50 text-violet-700" },
+  manager: { label: "Administrator", cls: "bg-indigo-50 text-indigo-700" },
   finance: { label: "Moliya", cls: "bg-emerald-50 text-emerald-700" },
 };
 
@@ -156,7 +157,7 @@ function StaffDialog({ staff, onClose }: { staff?: Staff; onClose: () => void })
   const [fullName, setFullName] = useState(staff?.fullName ?? "");
   const [email, setEmail] = useState(staff?.email ?? "");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<StaffRole>(staff?.role ?? "finance");
+  const [role, setRole] = useState<StaffRole>(staff?.role ?? "manager");
 
   const m = useMutation({
     mutationFn: () =>
@@ -219,9 +220,13 @@ function StaffDialog({ staff, onClose }: { staff?: Staff; onClose: () => void })
               onChange={(e) => setRole(e.target.value as StaffRole)}
               className="mt-1 block w-full h-9 rounded-md border border-slate-300 px-2 text-sm"
             >
-              <option value="finance">Moliya (faqat moliya, maosh, hisobotlar)</option>
-              <option value="center_admin">Administrator (to'liq boshqaruv)</option>
+              <option value="manager">Administrator (kundalik ish + to'lov yig'ish)</option>
+              <option value="finance">Moliya (moliya, maosh, hisobotlar)</option>
+              <option value="center_admin">Direktor (to'liq — hammasi)</option>
             </select>
+            <p className="mt-1 text-xs text-slate-400">
+              Administrator maosh, xarajat va xodimlarni ko'rmaydi. Direktor hammasini ko'radi.
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

@@ -5,6 +5,7 @@ import { AlertTriangle, CalendarDays, Scale, TrendingDown, TrendingUp, Trash2 } 
 import { toast } from "sonner";
 
 import { extractApiError } from "@/lib/api";
+import { authStore } from "@/lib/auth";
 import {
   createExpense,
   deleteExpense,
@@ -35,48 +36,60 @@ export const EXPENSE_CATEGORIES = [
 const catLabel = (v: string) => EXPENSE_CATEGORIES.find((c) => c.value === v)?.label ?? v;
 
 function FinancePage() {
-  const summary = useQuery({ queryKey: ["finance-summary"], queryFn: getFinanceSummary });
+  // The front-desk administrator (manager) collects payments but must not see the center's
+  // income/expense/profit totals or the expense ledger — only who owes.
+  const isManager = authStore.getUser()?.role === "manager";
+  const summary = useQuery({
+    queryKey: ["finance-summary"],
+    queryFn: getFinanceSummary,
+    enabled: !isManager,
+  });
   const debtors = useQuery({ queryKey: ["debtors"], queryFn: getDebtors });
   const profit = summary.data?.monthProfit ?? 0;
 
   return (
     <div>
-      <PageHeader title="Moliya" description="Tushum, xarajat, foyda va qarzdorlar" />
+      <PageHeader
+        title="Moliya"
+        description={isManager ? "Qarzdorlar va to'lov yig'ish" : "Tushum, xarajat, foyda va qarzdorlar"}
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="Oylik tushum"
-          value={summary.data?.monthIncome}
-          icon={TrendingUp}
-          accent="text-emerald-600 bg-emerald-50"
-          loading={summary.isLoading}
-        />
-        <StatCard
-          label="Oylik xarajat"
-          value={summary.data?.monthExpense}
-          icon={TrendingDown}
-          accent="text-rose-600 bg-rose-50"
-          loading={summary.isLoading}
-        />
-        <StatCard
-          label="Oylik foyda"
-          value={profit}
-          icon={Scale}
-          accent={profit >= 0 ? "text-indigo-600 bg-indigo-50" : "text-rose-600 bg-rose-50"}
-          valueClass={profit >= 0 ? "text-indigo-700" : "text-rose-700"}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          label="Umumiy qarz"
-          value={summary.data?.totalDebt}
-          icon={AlertTriangle}
-          accent="text-amber-600 bg-amber-50"
-          loading={summary.isLoading}
-        />
-      </div>
+      {!isManager && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label="Oylik tushum"
+            value={summary.data?.monthIncome}
+            icon={TrendingUp}
+            accent="text-emerald-600 bg-emerald-50"
+            loading={summary.isLoading}
+          />
+          <StatCard
+            label="Oylik xarajat"
+            value={summary.data?.monthExpense}
+            icon={TrendingDown}
+            accent="text-rose-600 bg-rose-50"
+            loading={summary.isLoading}
+          />
+          <StatCard
+            label="Oylik foyda"
+            value={profit}
+            icon={Scale}
+            accent={profit >= 0 ? "text-indigo-600 bg-indigo-50" : "text-rose-600 bg-rose-50"}
+            valueClass={profit >= 0 ? "text-indigo-700" : "text-rose-700"}
+            loading={summary.isLoading}
+          />
+          <StatCard
+            label="Umumiy qarz"
+            value={summary.data?.totalDebt}
+            icon={AlertTriangle}
+            accent="text-amber-600 bg-amber-50"
+            loading={summary.isLoading}
+          />
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ExpensesSection />
+      <div className={`grid grid-cols-1 gap-6 ${isManager ? "" : "lg:grid-cols-2"}`}>
+        {!isManager && <ExpensesSection />}
 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden self-start">
           <div className="px-5 py-3 border-b border-slate-200 flex items-center gap-2">

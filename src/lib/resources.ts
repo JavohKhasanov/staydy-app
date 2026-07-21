@@ -557,7 +557,7 @@ export async function deleteTeacher(id: string): Promise<void> {
 
 // --- staff (administrators + finance) ---
 
-export type StaffRole = "center_admin" | "finance";
+export type StaffRole = "center_admin" | "manager" | "finance";
 export interface Staff {
   id: string;
   email: string;

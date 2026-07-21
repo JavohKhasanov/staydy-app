@@ -12,6 +12,7 @@ import {
 } from "recharts";
 
 import { extractApiError } from "@/lib/api";
+import { authStore } from "@/lib/auth";
 import {
   getDashboard,
   getDebtors,
@@ -112,7 +113,13 @@ function KpiCard({
 
 function DashboardContent({ data }: { data: DashboardData }) {
   const t = data.totals ?? { students: 0, atRisk: 0, red: 0, yellow: 0 };
-  const finance = useQuery({ queryKey: ["finance-summary"], queryFn: getFinanceSummary });
+  // The administrator (manager) doesn't see center income/profit totals; skip the summary call.
+  const isManager = authStore.getUser()?.role === "manager";
+  const finance = useQuery({
+    queryKey: ["finance-summary"],
+    queryFn: getFinanceSummary,
+    enabled: !isManager,
+  });
   const debtors = useQuery({ queryKey: ["debtors"], queryFn: getDebtors });
   const leads = useQuery({ queryKey: ["leads"], queryFn: listLeads, enabled: LEADS_ENABLED });
   const groupsQ = useQuery({ queryKey: ["groups"], queryFn: listGroups });
@@ -148,18 +155,22 @@ function DashboardContent({ data }: { data: DashboardData }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Jami talabalar" value={t.students ?? 0} icon={Users} tone="indigo" />
         <KpiCard label="Xavf ostida" value={t.atRisk ?? 0} icon={AlertTriangle} tone="amber" />
-        <KpiCard
-          label="Bugungi tushum"
-          value={money(finance.data?.todayIncome ?? 0)}
-          icon={TrendingUp}
-          tone="emerald"
-        />
-        <KpiCard
-          label="Umumiy qarz"
-          value={money(finance.data?.totalDebt ?? 0)}
-          icon={Wallet}
-          tone="rose"
-        />
+        {!isManager && (
+          <>
+            <KpiCard
+              label="Bugungi tushum"
+              value={money(finance.data?.todayIncome ?? 0)}
+              icon={TrendingUp}
+              tone="emerald"
+            />
+            <KpiCard
+              label="Umumiy qarz"
+              value={money(finance.data?.totalDebt ?? 0)}
+              icon={Wallet}
+              tone="rose"
+            />
+          </>
+        )}
       </div>
 
       {missedSessions.length > 0 && (

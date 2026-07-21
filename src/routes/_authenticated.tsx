@@ -3,9 +3,11 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { BranchProvider } from "@/features/branches/BranchContext";
 
-// Path prefixes each limited role may visit. Administrators (center_admin) and the platform owner
-// have no entry here — they reach everything.
+// Path prefixes each limited role may visit. The director (center_admin) and platform owner have no
+// entry here — they reach everything.
 const FINANCE_PATHS = ["/finance", "/salaries", "/reports", "/students"];
+// The administrator (manager) reaches everything except salaries and staff management.
+const MANAGER_DENIED = ["/salaries", "/staff"];
 
 function currentRole(): string | undefined {
   try {
@@ -34,6 +36,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
     if (role === "finance" && !allowed(path, FINANCE_PATHS)) {
       throw redirect({ to: "/finance" });
+    }
+    if (role === "manager" && allowed(path, MANAGER_DENIED)) {
+      throw redirect({ to: "/" });
     }
   },
   component: AuthenticatedLayout,
