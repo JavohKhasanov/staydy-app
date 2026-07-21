@@ -13,8 +13,8 @@ import {
 
 const money = (n: number) => n.toLocaleString("uz-UZ").replace(/,/g, " ") + " so'm";
 
-// NotificationBell aggregates the center's live warnings (recomputed, no storage):
-// sessions past end-time with no attendance, invoices past due, and students attending
+// NotificationBell aggregates the center's live warnings (recomputed, no storage): today's
+// sessions that have started but aren't fully marked, invoices past due, and students attending
 // without an invoice (grace passed). Refreshes every 5 minutes.
 export function NotificationBell() {
   const missingQ = useQuery({
@@ -31,10 +31,9 @@ export function NotificationBell() {
   });
 
   const nowHM = new Date().toTimeString().slice(0, 5);
-  const missed = (missingQ.data ?? []).filter((g) => {
-    const cutoff = g.endTime || g.startTime;
-    return !!cutoff && cutoff <= nowHM;
-  });
+  // Show a group once its lesson has started (or all day if it has no time set) and keep it until
+  // the backend stops returning it — i.e. until every member is marked.
+  const missed = (missingQ.data ?? []).filter((g) => !g.startTime || g.startTime <= nowHM);
   const overdue = alertsQ.data?.overdueInvoices ?? [];
   const grace = alertsQ.data?.graceOverdue ?? [];
   const count = missed.length + overdue.length + grace.length;

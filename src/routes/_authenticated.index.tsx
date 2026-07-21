@@ -133,12 +133,10 @@ function DashboardContent({ data }: { data: DashboardData }) {
   // Today's sessions, generated from each group's recurring schedule (same source as Jadval).
   const todayCode = WEEKDAYS[(new Date().getDay() + 6) % 7].code;
   const teacherName = (id?: string) => teachersQ.data?.find((t) => t.id === id)?.fullName;
-  // Only warn once the session's end time has passed (or start time when no end is set).
+  // Warn from the session's start time (or all day if no time is set) and keep warning until the
+  // backend clears it — i.e. until every member of the group is marked for today.
   const nowHM = new Date().toTimeString().slice(0, 5);
-  const missedSessions = (missingQ.data ?? []).filter((g) => {
-    const cutoff = g.endTime || g.startTime;
-    return !!cutoff && cutoff <= nowHM;
-  });
+  const missedSessions = (missingQ.data ?? []).filter((g) => !g.startTime || g.startTime <= nowHM);
 
   const todaysSessions = (groupsQ.data ?? [])
     .filter((g) => parseDays(g.scheduleDays).includes(todayCode))
