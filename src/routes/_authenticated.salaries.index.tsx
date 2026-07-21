@@ -384,14 +384,17 @@ function RuleDialog({
                   ))}
                 </select>
                 {defKind !== "fixed" && (
-                  <Input
-                    type="number"
-                    min="0"
-                    value={defRate}
-                    onChange={(e) => setDefRate(e.target.value)}
-                    placeholder={defRateHint}
-                    className="h-9 w-40"
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={defRate}
+                      onChange={(e) => setDefRate(e.target.value)}
+                      placeholder="0"
+                      className="h-9 w-28 text-right"
+                    />
+                    <span className="text-xs text-slate-400 whitespace-nowrap">{defRateHint}</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -432,14 +435,19 @@ function RuleDialog({
                                 </option>
                               ))}
                             </select>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={o.rate}
-                              onChange={(e) => setOv(g.groupId, { rate: e.target.value })}
-                              placeholder={kindMeta(o.kind).unit}
-                              className="h-9 w-40"
-                            />
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={o.rate}
+                                onChange={(e) => setOv(g.groupId, { rate: e.target.value })}
+                                placeholder="0"
+                                className="h-9 w-28 text-right"
+                              />
+                              <span className="text-xs text-slate-400 whitespace-nowrap">
+                                {kindMeta(o.kind).unit}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
