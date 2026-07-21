@@ -940,10 +940,12 @@ export interface SalaryRule {
   teacherId: string;
   kind: SalaryKind;
   rate: number;
+  base: number;
 }
 export interface SalaryBasis {
   kind: SalaryKind;
   rate: number;
+  base: number;
   lessons: number;
   students: number;
   revenue: number;
@@ -970,7 +972,7 @@ export async function getSalaryRule(teacherId: string): Promise<SalaryRule> {
 }
 export async function setSalaryRule(
   teacherId: string,
-  body: { kind: SalaryKind; rate: number },
+  body: { kind: SalaryKind; rate: number; base: number },
 ): Promise<void> {
   await api.put(`/teachers/${teacherId}/salary-rule`, body);
 }
