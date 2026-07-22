@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, Pencil, Sparkles, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
 import {
@@ -22,6 +22,7 @@ import {
   listSurveys,
   recordAttendance,
   recordHomework,
+  setStudentLoginPassword,
   submitSurvey,
 } from "@/lib/resources";
 import type { Student } from "@/lib/types";
@@ -39,6 +40,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -69,6 +77,74 @@ function StudentDetailPage() {
       {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
       {data && <StudentDetailContent student={data} />}
     </div>
+  );
+}
+
+// StudentPasswordButton sets/resets a student's mini-app (Telegram/web) login password so they can
+// sign in with their phone.
+function StudentPasswordButton({ studentId, name }: { studentId: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const m = useMutation({
+    mutationFn: () => setStudentLoginPassword(studentId, password),
+    onSuccess: () => {
+      toast.success("Talaba paroli o'rnatildi");
+      setPassword("");
+      setOpen(false);
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <KeyRound className="h-4 w-4 mr-1.5" />
+        Talaba paroli
+      </Button>
+      <Dialog open={open} onOpenChange={(o) => !o && setOpen(false)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Talaba ilovasi paroli — {name}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (password.length >= 6) m.mutate();
+            }}
+            className="space-y-3"
+          >
+            <p className="text-xs text-slate-500">
+              Talaba o'z telefon raqami va shu parol bilan ilovaga kiradi (kamida 6 belgi).
+            </p>
+            <div>
+              <Label className="text-xs">Yangi parol</Label>
+              <Input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+                placeholder="kamida 6 belgi"
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Bekor qilish
+              </Button>
+              <Button
+                type="submit"
+                disabled={m.isPending || password.length < 6}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Saqlash
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -109,6 +185,7 @@ function StudentDetailContent({ student }: { student: Student }) {
               Tahrirlash
             </Button>
           )}
+          {!isTeacher && <StudentPasswordButton studentId={student.id} name={student.fullName} />}
           {!isTeacher && (
             <Button
               variant="outline"

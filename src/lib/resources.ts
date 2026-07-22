@@ -601,6 +601,12 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await api.post("/me/change-password", { currentPassword, newPassword });
 }
 
+// Set/reset a student's mini-app (Telegram/web) login password. The student logs in with their
+// phone + this password.
+export async function setStudentLoginPassword(studentId: string, password: string): Promise<void> {
+  await api.put(`/students/${studentId}/login-password`, { password });
+}
+
 // --- billing ---
 
 // generateMonthlyInvoices bills every active group member for the month at their course price
