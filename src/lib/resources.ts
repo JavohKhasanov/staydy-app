@@ -601,6 +601,15 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await api.post("/me/change-password", { currentPassword, newPassword });
 }
 
+// --- billing ---
+
+// generateMonthlyInvoices bills every active group member for the month at their course price
+// (idempotent). Returns how many invoices were created.
+export async function generateMonthlyInvoices(period: string): Promise<number> {
+  const res = await api.post<{ created: number }>("/finance/invoices/generate", { period });
+  return res.data?.created ?? 0;
+}
+
 // --- homework (read from the bundled student detail; record like attendance) ---
 
 export async function listHomework(id: string): Promise<Homework[]> {

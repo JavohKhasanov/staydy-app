@@ -9,6 +9,7 @@ import { authStore } from "@/lib/auth";
 import {
   createExpense,
   deleteExpense,
+  generateMonthlyInvoices,
   getDebtors,
   getFinanceSummary,
   listExpenses,
@@ -53,6 +54,9 @@ function FinancePage() {
         title="Moliya"
         description={isManager ? "Qarzdorlar va to'lov yig'ish" : "Tushum, xarajat, foyda va qarzdorlar"}
       />
+
+      <GenerateInvoicesCard />
+
 
       {!isManager && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -123,6 +127,62 @@ function FinancePage() {
             </ul>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// GenerateInvoicesCard bills every active group member for a chosen month at their course price in
+// one click (idempotent — re-running only adds the missing ones).
+function GenerateInvoicesCard() {
+  const qc = useQueryClient();
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+
+  const gen = useMutation({
+    mutationFn: () => generateMonthlyInvoices(month),
+    onSuccess: (created) => {
+      toast.success(
+        created > 0
+          ? `${created} ta hisob-faktura yaratildi`
+          : "Yangi hisob-faktura yo'q — hammasi allaqachon yaratilgan",
+      );
+      qc.invalidateQueries({ queryKey: ["debtors"] });
+      qc.invalidateQueries({ queryKey: ["finance-summary"] });
+      qc.invalidateQueries({ queryKey: ["group-finance"] });
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          <CalendarDays className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-slate-900">Oylik hisob-faktura</div>
+          <div className="text-xs text-slate-500">
+            Faol o'quvchilarga kurs narxida hisob-faktura yaratadi. Takroran bossangiz — faqat
+            yetishmaganini qo'shadi.
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="h-9 w-40"
+        />
+        <Button
+          onClick={() => {
+            if (window.confirm(`${month} oyi uchun hisob-fakturalar yaratilsinmi?`)) gen.mutate();
+          }}
+          disabled={gen.isPending}
+          className="h-9 bg-indigo-600 hover:bg-indigo-700"
+        >
+          {gen.isPending ? "Yaratilmoqda…" : "Yaratish"}
+        </Button>
       </div>
     </div>
   );
