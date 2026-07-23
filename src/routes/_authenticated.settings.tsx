@@ -8,8 +8,14 @@ import { extractApiError } from "@/lib/api";
 import {
   changePassword,
   createBranch,
+  createShopItem,
+  deleteShopItem,
   getBillingSettings,
+  getGamification,
+  listShopItems,
+  setGamification,
   updateBillingSettings,
+  updateShopItem,
   createObstacleOption,
   createRoom,
   deleteBranch,
@@ -21,7 +27,9 @@ import {
   updateBranch,
   DEFAULT_OBSTACLES,
   type Branch,
+  type Gamification,
   type ObstacleOption,
+  type ShopItem,
 } from "@/lib/resources";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
@@ -42,6 +50,8 @@ function SettingsPage() {
         <BranchesCard />
         <RoomsCard />
         <BillingRulesCard />
+        <GamificationCard />
+        <ShopCard />
         <ObstacleOptionsCard />
         <PasswordCard />
       </div>
@@ -505,6 +515,192 @@ function PasswordCard() {
           Saqlash
         </Button>
       </form>
+    </div>
+  );
+}
+
+// GamificationCard tunes the XP/coin economy for the student mini app.
+function GamificationCard() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["gamification"], queryFn: getGamification });
+  const [form, setForm] = useState<Gamification | null>(null);
+  const cfg = form ?? q.data ?? null;
+
+  const save = useMutation({
+    mutationFn: () => setGamification(cfg!),
+    onSuccess: () => {
+      toast.success("Saqlandi");
+      qc.invalidateQueries({ queryKey: ["gamification"] });
+      setForm(null);
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  const set = (k: keyof Gamification, v: string) =>
+    setForm({ ...(cfg as Gamification), [k]: Number(v) || 0 });
+
+  const fields: { k: keyof Gamification; label: string }[] = [
+    { k: "xpAttend", label: "Davomat (vaqtida) XP" },
+    { k: "xpLate", label: "Davomat (kech) XP" },
+    { k: "xpHomeworkMax", label: "Vazifa maks. XP" },
+    { k: "xpCheckin", label: "Check-in XP" },
+    { k: "levelSize", label: "Bosqich uchun XP" },
+    { k: "coinBase", label: "Kumush kursi (asos)" },
+    { k: "coinStep", label: "Kumush kursi (qadam)" },
+  ];
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm max-w-2xl">
+      <div className="px-5 py-4 border-b border-slate-200">
+        <h2 className="text-sm font-semibold text-slate-900">Gamifikatsiya</h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Talaba ilovasidagi XP/kumush iqtisodi. Kumush = XP × (asos + (bosqich−1)×qadam).
+        </p>
+      </div>
+      <div className="p-5">
+        {q.isLoading || !cfg ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {fields.map((f) => (
+                <div key={f.k}>
+                  <Label className="text-xs text-slate-600">{f.label}</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={cfg[f.k]}
+                    onChange={(e) => set(f.k, e.target.value)}
+                    className="mt-1 h-9"
+                  />
+                </div>
+              ))}
+            </div>
+            <Button
+              onClick={() => save.mutate()}
+              disabled={save.isPending || !form}
+              className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              Saqlash
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ShopCard manages the reward-shop items students buy with coins.
+function ShopCard() {
+  const qc = useQueryClient();
+  const [form, setForm] = useState({ name: "", icon: "🎁", price: "" });
+  const q = useQuery({ queryKey: ["shop-items"], queryFn: listShopItems });
+  const items = q.data ?? [];
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["shop-items"] });
+
+  const add = useMutation({
+    mutationFn: () =>
+      createShopItem({ name: form.name.trim(), icon: form.icon, price: Number(form.price) || 0, isActive: true }),
+    onSuccess: () => {
+      setForm({ name: "", icon: "🎁", price: "" });
+      toast.success("Mahsulot qo'shildi");
+      invalidate();
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+  const toggle = useMutation({
+    mutationFn: (it: ShopItem) =>
+      updateShopItem(it.id, { name: it.name, icon: it.icon, price: it.price, isActive: !it.isActive }),
+    onSuccess: invalidate,
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => deleteShopItem(id),
+    onSuccess: () => {
+      toast.success("O'chirildi");
+      invalidate();
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm max-w-2xl">
+      <div className="px-5 py-4 border-b border-slate-200">
+        <h2 className="text-sm font-semibold text-slate-900">Do'kon</h2>
+        <p className="text-sm text-slate-500 mt-1">Talabalar kumushga sotib oladigan mukofotlar.</p>
+      </div>
+      <div className="p-5">
+        <div className="flex flex-wrap gap-2">
+          <Input
+            placeholder="Emoji"
+            value={form.icon}
+            maxLength={4}
+            onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
+            className="w-16 text-center"
+          />
+          <Input
+            placeholder="Nomi (masalan: Oltin nishon)"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            className="flex-1 min-w-40"
+          />
+          <Input
+            type="number"
+            min="0"
+            placeholder="Narx (kumush)"
+            value={form.price}
+            onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+            className="w-36"
+          />
+          <Button
+            onClick={() => form.name.trim() && add.mutate()}
+            disabled={add.isPending || !form.name.trim()}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0"
+          >
+            {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            <span className="ml-1.5">Qo'shish</span>
+          </Button>
+        </div>
+
+        <div className="mt-4">
+          {q.isLoading && <LoadingBlock />}
+          {!q.isLoading && items.length === 0 && <EmptyBlock title="Mahsulot yo'q" />}
+          {items.length > 0 && (
+            <ul className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+              {items.map((it) => (
+                <li key={it.id} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="flex items-center gap-2 text-sm text-slate-800">
+                    <span className="text-lg">{it.icon}</span>
+                    {it.name}
+                    <span className="text-xs text-amber-600">🪙 {it.price}</span>
+                    {!it.isActive && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Nofaol</span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => toggle.mutate(it)}
+                      className="text-xs text-slate-500 hover:text-indigo-600 px-2 py-1 rounded hover:bg-slate-50"
+                    >
+                      {it.isActive ? "To'xtatish" : "Faollashtirish"}
+                    </button>
+                    <button
+                      onClick={() => del.mutate(it.id)}
+                      className="text-slate-400 hover:text-rose-600 rounded-md p-1 hover:bg-rose-50"
+                      aria-label="O'chirish"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -607,6 +607,119 @@ export async function setStudentLoginPassword(studentId: string, password: strin
   await api.put(`/students/${studentId}/login-password`, { password });
 }
 
+// --- homework (assignments + grading) ---
+
+export type SubmissionStatus = "submitted" | "accepted" | "rejected";
+export interface Assignment {
+  id: string;
+  groupId: string;
+  title: string;
+  description?: string;
+  deadline?: string;
+  lessonDate?: string;
+  maxScore: number;
+  createdAt: string;
+  submissionCount: number;
+}
+export interface Submission {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  text?: string;
+  links?: string;
+  status: SubmissionStatus;
+  score?: number;
+  reviewNote?: string;
+  submittedAt: string;
+  reviewedAt?: string;
+}
+
+export async function listGroupHomework(groupId: string): Promise<Assignment[]> {
+  const res = await api.get(`/groups/${groupId}/homework`);
+  return unwrapList<Assignment>(res.data);
+}
+export async function createAssignment(
+  groupId: string,
+  body: { title: string; description?: string; deadline?: string; lessonDate?: string; maxScore?: number },
+): Promise<Assignment> {
+  const res = await api.post(`/groups/${groupId}/homework`, body);
+  return res.data as Assignment;
+}
+export async function deleteAssignment(id: string): Promise<void> {
+  await api.delete(`/homework/${id}`);
+}
+export async function listSubmissions(assignmentId: string): Promise<Submission[]> {
+  const res = await api.get(`/homework/${assignmentId}/submissions`);
+  return unwrapList<Submission>(res.data);
+}
+export async function gradeSubmission(
+  submissionId: string,
+  body: { status: "accepted" | "rejected"; xp?: number; note?: string },
+): Promise<Submission> {
+  const res = await api.patch(`/submissions/${submissionId}/grade`, body);
+  return res.data as Submission;
+}
+
+// --- reward shop (admin) ---
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  icon?: string;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+}
+export async function listShopItems(): Promise<ShopItem[]> {
+  const res = await api.get("/shop/items");
+  return unwrapList<ShopItem>(res.data);
+}
+export async function createShopItem(body: {
+  name: string;
+  icon?: string;
+  price: number;
+  isActive: boolean;
+}): Promise<ShopItem> {
+  const res = await api.post("/shop/items", body);
+  return res.data as ShopItem;
+}
+export async function updateShopItem(
+  id: string,
+  body: { name: string; icon?: string; price: number; isActive: boolean },
+): Promise<ShopItem> {
+  const res = await api.put(`/shop/items/${id}`, body);
+  return res.data as ShopItem;
+}
+export async function deleteShopItem(id: string): Promise<void> {
+  await api.delete(`/shop/items/${id}`);
+}
+
+// --- gamification settings + manual XP ---
+
+export interface Gamification {
+  xpAttend: number;
+  xpLate: number;
+  xpHomeworkMax: number;
+  xpCheckin: number;
+  levelSize: number;
+  coinBase: number;
+  coinStep: number;
+}
+export async function getGamification(): Promise<Gamification> {
+  const res = await api.get<Gamification>("/gamification");
+  return res.data;
+}
+export async function setGamification(body: Gamification): Promise<void> {
+  await api.put("/gamification", body);
+}
+// Award a student a one-off XP (exam pass or manual bonus).
+export async function awardStudentXP(
+  studentId: string,
+  body: { xp: number; kind?: "exam" | "manual"; reason?: string },
+): Promise<void> {
+  await api.post(`/students/${studentId}/xp`, body);
+}
+
 // --- billing ---
 
 // generateMonthlyInvoices bills every active group member for the month at their course price

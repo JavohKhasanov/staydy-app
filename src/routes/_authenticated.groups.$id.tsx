@@ -24,6 +24,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { GroupDialog } from "@/features/groups/GroupDialog";
 import { GroupPayments } from "@/features/groups/GroupPayments";
+import { GroupHomework } from "@/features/groups/GroupHomework";
 import { AddStudentDialog } from "@/features/groups/AddStudentDialog";
 
 export const Route = createFileRoute("/_authenticated/groups/$id")({
@@ -201,6 +202,8 @@ function GroupDetailPage() {
               </div>
             )}
           </div>
+
+          <GroupHomework groupId={g.id} />
 
           <GroupPayments groupId={g.id} coursePrice={course?.price} />
         </div>

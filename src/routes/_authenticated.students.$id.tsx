@@ -20,6 +20,7 @@ import {
   listHomework,
   listNotes,
   listSurveys,
+  awardStudentXP,
   recordAttendance,
   recordHomework,
   setStudentLoginPassword,
@@ -148,8 +149,97 @@ function StudentPasswordButton({ studentId, name }: { studentId: string; name: s
   );
 }
 
+// StudentXPButton awards a one-off XP bonus (exam pass or manual reward) that feeds gamification.
+function StudentXPButton({ studentId, name }: { studentId: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [xp, setXp] = useState("5");
+  const [kind, setKind] = useState<"manual" | "exam">("manual");
+  const [reason, setReason] = useState("");
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: () =>
+      awardStudentXP(studentId, { xp: Number(xp) || 0, kind, reason: reason || undefined }),
+    onSuccess: () => {
+      toast.success("XP berildi");
+      setReason("");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["student", studentId] });
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Sparkles className="h-4 w-4 mr-1.5" />
+        XP berish
+      </Button>
+      <Dialog open={open} onOpenChange={(o) => !o && setOpen(false)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>XP berish — {name}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (Number(xp)) m.mutate();
+            }}
+            className="space-y-3"
+          >
+            <p className="text-xs text-slate-500">
+              Manfiy qiymat ham mumkin (jazo). Kumush XP darajasiga qarab qo'shiladi.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">XP</Label>
+                <Input
+                  type="number"
+                  value={xp}
+                  onChange={(e) => setXp(e.target.value)}
+                  required
+                  className="mt-1 h-9"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Turi</Label>
+                <select
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as "manual" | "exam")}
+                  className="mt-1 h-9 w-full rounded-md border border-slate-300 px-2 text-sm"
+                >
+                  <option value="manual">Qo'lda</option>
+                  <option value="exam">Imtihon</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Izoh (ixtiyoriy)</Label>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Bekor qilish
+              </Button>
+              <Button
+                type="submit"
+                disabled={m.isPending || !Number(xp)}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Berish
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function StudentDetailContent({ student }: { student: Student }) {
-  const isTeacher = useSession().user?.role === "teacher";
+  const role = useSession().user?.role;
+  const isTeacher = role === "teacher";
+  const canAwardXP = role !== "finance";
   const [editOpen, setEditOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -186,6 +276,7 @@ function StudentDetailContent({ student }: { student: Student }) {
             </Button>
           )}
           {!isTeacher && <StudentPasswordButton studentId={student.id} name={student.fullName} />}
+          {canAwardXP && <StudentXPButton studentId={student.id} name={student.fullName} />}
           {!isTeacher && (
             <Button
               variant="outline"
