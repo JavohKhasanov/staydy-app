@@ -136,6 +136,14 @@ export function GroupDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!form.roomId) {
+              toast.error(
+                roomList.length
+                  ? "Xonani tanlang"
+                  : "Avval Sozlamalar → Xonalar bo'limida xona qo'shing",
+              );
+              return;
+            }
             mutation.mutate();
           }}
           className="grid grid-cols-1 gap-4"
@@ -206,7 +214,7 @@ export function GroupDialog({
             <Field label="Tugash">
               <Input type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
             </Field>
-            <Field label="Xona">
+            <Field label="Xona" required>
               <Select
                 value={form.roomId}
                 onValueChange={(v) => {
@@ -220,7 +228,7 @@ export function GroupDialog({
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="—" />
+                  <SelectValue placeholder="Tanlang" />
                 </SelectTrigger>
                 <SelectContent>
                   {roomList.map((r) => (
