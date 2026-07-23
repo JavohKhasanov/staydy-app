@@ -91,6 +91,7 @@ export interface InterventionTask {
   createdAt: string;
   resolvedAt?: string;
   reasons?: string[];
+  suggestedActions?: string[];
   student: { id: string; fullName: string };
   resolutionComment?: string;
 }

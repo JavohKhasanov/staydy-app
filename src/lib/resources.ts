@@ -136,6 +136,7 @@ function mapTask(t: {
   studentId: string;
   studentName: string;
   reasons?: string[];
+  suggestedActions?: string[];
   status: string;
   resolutionComment?: string;
   createdAt: string;
@@ -147,6 +148,7 @@ function mapTask(t: {
     createdAt: t.createdAt,
     resolvedAt: t.resolvedAt,
     reasons: t.reasons ?? [],
+    suggestedActions: t.suggestedActions ?? [],
     student: { id: t.studentId, fullName: t.studentName },
     resolutionComment: t.resolutionComment,
   };

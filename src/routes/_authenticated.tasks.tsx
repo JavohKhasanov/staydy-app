@@ -130,6 +130,20 @@ function TasksPage() {
                             ))}
                           </div>
                         )}
+                        {t.suggestedActions && t.suggestedActions.length > 0 && (
+                          <div className="mt-2 rounded-md bg-indigo-50 px-2 py-1.5">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-indigo-500">
+                              Tavsiya
+                            </div>
+                            <ul className="mt-0.5 space-y-0.5">
+                              {t.suggestedActions.map((a) => (
+                                <li key={a} className="text-xs leading-snug text-indigo-800">
+                                  {a}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                         <div className="text-xs text-slate-500 mt-2">
                           {new Date(t.createdAt).toLocaleDateString("uz-UZ")}
                         </div>
