@@ -9,6 +9,10 @@ import { authStore } from "./auth";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  // Without a timeout a slow/hung response (busy server, stalled refresh) leaves every query
+  // pending forever → the UI is stuck on a loading spinner until a manual logout. Fail fast
+  // instead: a rejected request surfaces an error (or triggers the 401→refresh→login path).
+  timeout: 20_000,
   headers: {
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
@@ -36,6 +40,8 @@ async function performRefresh(): Promise<string | null> {
       `${API_BASE_URL}/auth/refresh`,
       { refreshToken },
       {
+        // A hung refresh must not block every queued 401 retry indefinitely.
+        timeout: 15_000,
         headers: {
           "Content-Type": "application/json",
           "ngrok-skip-browser-warning": "true",
