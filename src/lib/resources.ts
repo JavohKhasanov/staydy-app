@@ -647,6 +647,13 @@ export async function createAssignment(
   const res = await api.post(`/groups/${groupId}/homework`, body);
   return res.data as Assignment;
 }
+export async function updateAssignment(
+  id: string,
+  body: { title: string; description?: string; deadline?: string; maxScore?: number },
+): Promise<Assignment> {
+  const res = await api.patch(`/homework/${id}`, body);
+  return res.data as Assignment;
+}
 export async function deleteAssignment(id: string): Promise<void> {
   await api.delete(`/homework/${id}`);
 }

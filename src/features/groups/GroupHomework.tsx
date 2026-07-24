@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { BookCheck, Check, Loader2, Plus, Trash2, X } from "lucide-react";
+import { BookCheck, CalendarClock, Check, Loader2, Plus, Trash2, X } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
 import {
@@ -10,6 +10,7 @@ import {
   gradeSubmission,
   listGroupHomework,
   listSubmissions,
+  updateAssignment,
   type Assignment,
   type Submission,
 } from "@/lib/resources";
@@ -36,6 +37,7 @@ export function GroupHomework({ groupId }: { groupId: string }) {
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [grading, setGrading] = useState<Assignment | null>(null);
+  const [editing, setEditing] = useState<Assignment | null>(null);
 
   const q = useQuery({
     queryKey: ["group-homework", groupId],
@@ -90,6 +92,13 @@ export function GroupHomework({ groupId }: { groupId: string }) {
                   Baholash
                 </Button>
                 <button
+                  onClick={() => setEditing(a)}
+                  className="rounded p-1.5 text-slate-500 hover:bg-slate-100"
+                  title="Tahrirlash / muddatni uzaytirish"
+                >
+                  <CalendarClock className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => {
                     if (window.confirm(`"${a.title}" o'chirilsinmi?`)) del.mutate(a.id);
                   }}
@@ -105,6 +114,7 @@ export function GroupHomework({ groupId }: { groupId: string }) {
       )}
 
       {creating && <CreateDialog groupId={groupId} onClose={() => setCreating(false)} />}
+      {editing && <EditDialog assignment={editing} onClose={() => setEditing(null)} />}
       {grading && <GradeDialog assignment={grading} onClose={() => setGrading(null)} />}
     </div>
   );
@@ -177,6 +187,88 @@ function CreateDialog({ groupId, onClose }: { groupId: string; onClose: () => vo
             <Button type="submit" disabled={m.isPending || !title.trim()} className="bg-indigo-600 hover:bg-indigo-700">
               {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Qo'shish
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// toLocalInput converts an ISO deadline to the value a datetime-local input expects (local time).
+function toLocalInput(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function EditDialog({ assignment, onClose }: { assignment: Assignment; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [title, setTitle] = useState(assignment.title);
+  const [description, setDescription] = useState(assignment.description ?? "");
+  const [deadline, setDeadline] = useState(toLocalInput(assignment.deadline));
+  const [maxScore, setMaxScore] = useState(String(assignment.maxScore));
+
+  const m = useMutation({
+    mutationFn: () =>
+      updateAssignment(assignment.id, {
+        title,
+        description: description || undefined,
+        deadline: deadline ? new Date(deadline).toISOString() : "",
+        maxScore: Number(maxScore) || assignment.maxScore,
+      }),
+    onSuccess: () => {
+      toast.success("Saqlandi");
+      qc.invalidateQueries({ queryKey: ["group-homework", assignment.groupId] });
+      onClose();
+    },
+    onError: (e) => toast.error(extractApiError(e)),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Vazifani tahrirlash</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (title.trim()) m.mutate();
+          }}
+          className="space-y-3"
+        >
+          <div>
+            <Label className="text-xs">Sarlavha</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1 h-9" />
+          </div>
+          <div>
+            <Label className="text-xs">Tavsif</Label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Muddat (uzaytirish)</Label>
+              <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="mt-1 h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Maks. XP</Label>
+              <Input type="number" min="0" value={maxScore} onChange={(e) => setMaxScore(e.target.value)} className="mt-1 h-9" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={m.isPending || !title.trim()} className="bg-indigo-600 hover:bg-indigo-700">
+              {m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Saqlash
             </Button>
           </DialogFooter>
         </form>
