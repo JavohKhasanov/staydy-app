@@ -162,6 +162,32 @@ export async function assignTask(id: string, assignedTo: string): Promise<void> 
   await api.patch(`/intervention-tasks/${id}/assign`, { assignedTo });
 }
 
+// --- in-app notifications ---
+
+export interface AppNotification {
+  id: string;
+  kind: string;
+  title: string;
+  body?: string;
+  link?: string;
+  read: boolean;
+  createdAt: string;
+}
+export async function listNotifications(): Promise<AppNotification[]> {
+  const res = await api.get("/notifications");
+  return unwrapList<AppNotification>(res.data);
+}
+export async function notificationUnreadCount(): Promise<number> {
+  const res = await api.get<{ count: number }>("/notifications/unread-count");
+  return res.data.count;
+}
+export async function markNotificationRead(id: string): Promise<void> {
+  await api.post(`/notifications/${id}/read`);
+}
+export async function markAllNotificationsRead(): Promise<void> {
+  await api.post("/notifications/read-all");
+}
+
 // --- students ---
 
 export async function listStudents(): Promise<Student[]> {

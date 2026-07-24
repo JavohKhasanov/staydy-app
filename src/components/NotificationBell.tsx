@@ -1,9 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { Bell, Banknote, CalendarX2, Hourglass } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Bell, Banknote, CalendarX2, Hourglass, ShieldAlert } from "lucide-react";
 
 import { authStore } from "@/lib/auth";
-import { getPaymentAlerts, listMissingAttendance } from "@/lib/resources";
+import {
+  getPaymentAlerts,
+  listMissingAttendance,
+  listNotifications,
+  markNotificationRead,
+} from "@/lib/resources";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +39,21 @@ export function NotificationBell() {
     refetchInterval: 5 * 60_000,
     staleTime: 0,
   });
+  // Persistent in-app notifications (task assigned, SLA escalation, …).
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const notifsQ = useQuery({
+    queryKey: ["notifications"],
+    queryFn: listNotifications,
+    refetchInterval: 60_000,
+    staleTime: 0,
+  });
+  const notifications = notifsQ.data ?? [];
+  const unreadNotifs = notifications.filter((n) => !n.read);
+  const openNotif = useMutation({
+    mutationFn: (id: string) => markNotificationRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
 
   const nowHM = new Date().toTimeString().slice(0, 5);
   // Show a group once its lesson has started (or all day if it has no time set) and keep it until
@@ -41,7 +61,7 @@ export function NotificationBell() {
   const missed = (missingQ.data ?? []).filter((g) => !g.startTime || g.startTime <= nowHM);
   const overdue = alertsQ.data?.overdueInvoices ?? [];
   const grace = alertsQ.data?.graceOverdue ?? [];
-  const count = missed.length + overdue.length + grace.length;
+  const count = unreadNotifs.length + missed.length + overdue.length + grace.length;
 
   return (
     <DropdownMenu>
@@ -61,11 +81,31 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
         <DropdownMenuLabel>Bildirishnomalar</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {count === 0 && (
+        {count === 0 && notifications.length === 0 && (
           <div className="px-3 py-4 text-center text-sm text-slate-500">
             Hammasi joyida — ogohlantirish yo'q.
           </div>
         )}
+
+        {notifications.map((n) => (
+          <button
+            key={n.id}
+            onClick={() => {
+              if (!n.read) openNotif.mutate(n.id);
+              if (n.link) navigate({ to: n.link });
+            }}
+            className={`flex w-full items-start gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 ${
+              n.read ? "opacity-60" : ""
+            }`}
+          >
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+            <span className="min-w-0 text-sm">
+              <span className="font-medium text-slate-900">{n.title}</span>
+              {n.body && <span className="block text-xs text-slate-500">{n.body}</span>}
+            </span>
+            {!n.read && <span className="ml-auto mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+          </button>
+        ))}
 
         {missed.map((g) => (
           <Link
