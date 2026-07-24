@@ -331,18 +331,6 @@ export async function resolveTask(id: string, resolutionComment: string): Promis
   await api.post(`/intervention-tasks/${id}/resolve`, { resolutionComment });
 }
 
-// --- telegram ---
-
-export interface TelegramLink {
-  link: string;
-  token: string;
-  expiresAt: string;
-}
-
-export async function createTelegramLink(studentId: string): Promise<TelegramLink> {
-  const res = await api.post<TelegramLink>(`/students/${studentId}/telegram-link`);
-  return res.data;
-}
 
 // --- dashboard ---
 

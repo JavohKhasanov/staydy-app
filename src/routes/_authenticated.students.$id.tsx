@@ -35,7 +35,6 @@ import { ActivityTimeline } from "@/features/activities/ActivityTimeline";
 import { CONTACT_LOG_ENABLED, ENROLLMENTS_ENABLED, MENTOR_ENABLED } from "@/lib/flags";
 import { PageHeader } from "@/components/PageHeader";
 import { RiskBadge } from "@/components/RiskBadge";
-import { TelegramLinkButton } from "@/features/students/TelegramLinkButton";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -298,7 +297,6 @@ function StudentDetailContent({ student }: { student: Student }) {
               O'chirish
             </Button>
           )}
-          <TelegramLinkButton studentId={student.id} />
           {student.riskScore != null && (
             <div className="text-right">
               <div className="text-xs text-slate-500">Xavf bali</div>
