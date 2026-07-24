@@ -239,6 +239,8 @@ function StudentDetailContent({ student }: { student: Student }) {
   const role = useSession().user?.role;
   const isTeacher = role === "teacher";
   const canAwardXP = role !== "finance";
+  // Finance may view a student (debtor follow-up) but not edit/delete/reassign them.
+  const canManage = !isTeacher && role !== "finance";
   const [editOpen, setEditOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -253,7 +255,7 @@ function StudentDetailContent({ student }: { student: Student }) {
   });
   return (
     <div className="space-y-6">
-      {!isTeacher && (
+      {canManage && (
         <StudentEditDialog open={editOpen} onOpenChange={setEditOpen} student={student} />
       )}
       <div className="flex items-start justify-between gap-4">
@@ -268,7 +270,7 @@ function StudentDetailContent({ student }: { student: Student }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {!isTeacher && (
+          {canManage && (
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4 mr-1.5" />
               Tahrirlash
@@ -277,7 +279,7 @@ function StudentDetailContent({ student }: { student: Student }) {
           {/* Password reset: director/administrator (any student) + teacher (own students, backend-enforced); not finance. */}
           {canAwardXP && <StudentPasswordButton studentId={student.id} name={student.fullName} />}
           {canAwardXP && <StudentXPButton studentId={student.id} name={student.fullName} />}
-          {!isTeacher && (
+          {canManage && (
             <Button
               variant="outline"
               size="sm"

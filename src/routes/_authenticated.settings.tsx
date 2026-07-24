@@ -32,6 +32,7 @@ import {
   type ShopItem,
 } from "@/lib/resources";
 import { PageHeader } from "@/components/PageHeader";
+import { useSession } from "@/features/auth/useSession";
 import { EmptyBlock, ErrorBlock, LoadingBlock } from "@/components/StateBlocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,15 +44,18 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
+  // Economy + billing config is director-only; the administrator (manager) shouldn't reconfigure it.
+  const role = useSession().user?.role;
+  const isDirector = role === "center_admin" || role === "super_admin";
   return (
     <div>
       <PageHeader title="Sozlamalar" description="Markaz filiallari va so'rovnoma sozlamalari" />
       <div className="space-y-6">
         <BranchesCard />
         <RoomsCard />
-        <BillingRulesCard />
-        <GamificationCard />
-        <ShopCard />
+        {isDirector && <BillingRulesCard />}
+        {isDirector && <GamificationCard />}
+        {isDirector && <ShopCard />}
         <ObstacleOptionsCard />
         <PasswordCard />
       </div>
@@ -536,8 +540,11 @@ function GamificationCard() {
     onError: (e) => toast.error(extractApiError(e)),
   });
 
-  const set = (k: keyof Gamification, v: string) =>
-    setForm({ ...(cfg as Gamification), [k]: Number(v) || 0 });
+  const set = (k: keyof Gamification, v: string) => {
+    let n = Math.max(0, Number(v) || 0);
+    if (k === "levelSize" && n < 1) n = 1; // avoid divide-by-zero in level math
+    setForm({ ...(cfg as Gamification), [k]: n });
+  };
 
   const fields: { k: keyof Gamification; label: string }[] = [
     { k: "xpAttend", label: "Davomat (vaqtida) XP" },
@@ -656,8 +663,8 @@ function ShopCard() {
             className="w-36"
           />
           <Button
-            onClick={() => form.name.trim() && add.mutate()}
-            disabled={add.isPending || !form.name.trim()}
+            onClick={() => form.name.trim() && Number(form.price) > 0 && add.mutate()}
+            disabled={add.isPending || !form.name.trim() || !(Number(form.price) > 0)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0"
           >
             {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}

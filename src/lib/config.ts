@@ -1,3 +1,3 @@
 export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-  "https://multi.goport.uz/api/v1";
+  "https://api.staydy.uz/api/v1";
