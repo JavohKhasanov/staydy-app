@@ -1420,3 +1420,33 @@ export async function updateLesson(id: string, form: LessonForm): Promise<Lesson
 export async function deleteLesson(id: string): Promise<void> {
   await api.delete(`/lessons/${id}`);
 }
+
+// --- retention analytics ---
+
+export interface RetentionCohort {
+  month: string;
+  total: number;
+  active: number;
+  dropped: number;
+  retentionRate: number;
+}
+export interface RetentionStats {
+  total: number;
+  active: number;
+  dropped: number;
+  retentionRate: number;
+  green: number;
+  yellow: number;
+  red: number;
+  cohorts: RetentionCohort[];
+  interventions: {
+    open: number;
+    resolved: number;
+    resolved30d: number;
+    avgResolveDays: number;
+  };
+}
+export async function getRetention(): Promise<RetentionStats> {
+  const res = await api.get<RetentionStats>("/retention");
+  return res.data;
+}

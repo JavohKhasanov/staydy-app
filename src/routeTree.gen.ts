@@ -20,6 +20,7 @@ import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated.staff.index'
 import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated.schedule.index'
 import { Route as AuthenticatedSalariesIndexRouteImport } from './routes/_authenticated.salaries.index'
+import { Route as AuthenticatedRetentionIndexRouteImport } from './routes/_authenticated.retention.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated.reports.index'
 import { Route as AuthenticatedLeadsIndexRouteImport } from './routes/_authenticated.leads.index'
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated.groups.index'
@@ -90,6 +91,12 @@ const AuthenticatedSalariesIndexRoute =
   AuthenticatedSalariesIndexRouteImport.update({
     id: '/salaries/',
     path: '/salaries/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRetentionIndexRoute =
+  AuthenticatedRetentionIndexRouteImport.update({
+    id: '/retention/',
+    path: '/retention/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedReportsIndexRoute =
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/groups/': typeof AuthenticatedGroupsIndexRoute
   '/leads/': typeof AuthenticatedLeadsIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/retention/': typeof AuthenticatedRetentionIndexRoute
   '/salaries/': typeof AuthenticatedSalariesIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
@@ -200,6 +208,7 @@ export interface FileRoutesByTo {
   '/groups': typeof AuthenticatedGroupsIndexRoute
   '/leads': typeof AuthenticatedLeadsIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
+  '/retention': typeof AuthenticatedRetentionIndexRoute
   '/salaries': typeof AuthenticatedSalariesIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
@@ -226,6 +235,7 @@ export interface FileRoutesById {
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
   '/_authenticated/leads/': typeof AuthenticatedLeadsIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
+  '/_authenticated/retention/': typeof AuthenticatedRetentionIndexRoute
   '/_authenticated/salaries/': typeof AuthenticatedSalariesIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/groups/'
     | '/leads/'
     | '/reports/'
+    | '/retention/'
     | '/salaries/'
     | '/schedule/'
     | '/staff/'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/groups'
     | '/leads'
     | '/reports'
+    | '/retention'
     | '/salaries'
     | '/schedule'
     | '/staff'
@@ -301,6 +313,7 @@ export interface FileRouteTypes {
     | '/_authenticated/groups/'
     | '/_authenticated/leads/'
     | '/_authenticated/reports/'
+    | '/_authenticated/retention/'
     | '/_authenticated/salaries/'
     | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/salaries'
       fullPath: '/salaries/'
       preLoaderRoute: typeof AuthenticatedSalariesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/retention/': {
+      id: '/_authenticated/retention/'
+      path: '/retention'
+      fullPath: '/retention/'
+      preLoaderRoute: typeof AuthenticatedRetentionIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/reports/': {
@@ -496,6 +516,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
   AuthenticatedLeadsIndexRoute: typeof AuthenticatedLeadsIndexRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
+  AuthenticatedRetentionIndexRoute: typeof AuthenticatedRetentionIndexRoute
   AuthenticatedSalariesIndexRoute: typeof AuthenticatedSalariesIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
@@ -520,6 +541,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedLeadsIndexRoute: AuthenticatedLeadsIndexRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
+  AuthenticatedRetentionIndexRoute: AuthenticatedRetentionIndexRoute,
   AuthenticatedSalariesIndexRoute: AuthenticatedSalariesIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,

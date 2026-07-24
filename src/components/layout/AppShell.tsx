@@ -12,6 +12,7 @@ import {
   Wallet,
   Coins,
   BarChart3,
+  TrendingUp,
   UserCog,
   Plug,
   Settings,
@@ -56,6 +57,7 @@ const NAV: NavItem[] = [
   { to: "/teachers", label: "Ustozlar", icon: GraduationCap },
   { to: "/staff", label: "Xodimlar", icon: UserCog },
   { to: "/tasks", label: "Vazifalar", icon: ClipboardList },
+  { to: "/retention", label: "Ushlab qolish", icon: TrendingUp },
   { to: "/finance", label: "Moliya", icon: Wallet },
   { to: "/salaries", label: "Maosh", icon: Coins },
   { to: "/reports", label: "Hisobotlar", icon: BarChart3 },
@@ -76,6 +78,7 @@ const FINANCE_NAV: NavItem[] = [
   { to: "/finance", label: "Moliya", icon: Wallet },
   { to: "/salaries", label: "Maosh", icon: Coins },
   { to: "/reports", label: "Hisobotlar", icon: BarChart3 },
+  { to: "/retention", label: "Ushlab qolish", icon: TrendingUp },
 ];
 
 const ROLE_LABEL: Record<string, string> = {

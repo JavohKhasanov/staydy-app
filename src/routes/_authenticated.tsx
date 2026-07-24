@@ -6,7 +6,7 @@ import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 // Path prefixes each limited role may visit. The director (center_admin) and platform owner have no
 // entry here — they reach everything.
-const FINANCE_PATHS = ["/finance", "/salaries", "/reports", "/students"];
+const FINANCE_PATHS = ["/finance", "/salaries", "/reports", "/students", "/retention"];
 // The administrator (manager) reaches everything except salaries and staff management.
 const MANAGER_DENIED = ["/salaries", "/staff"];
 
