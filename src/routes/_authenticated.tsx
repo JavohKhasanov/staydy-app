@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { BranchProvider } from "@/features/branches/BranchContext";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 // Path prefixes each limited role may visit. The director (center_admin) and platform owner have no
 // entry here — they reach everything.
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  useAutoRefresh();
   return (
     <BranchProvider>
       <AppShell>

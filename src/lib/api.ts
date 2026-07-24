@@ -32,6 +32,28 @@ type RetriableConfig = AxiosRequestConfig & { _retry?: boolean };
 
 let refreshPromise: Promise<string | null> | null = null;
 
+// getRefreshedToken dedupes concurrent refreshes: all callers (the 401 interceptor and the
+// proactive auto-refresh) share one in-flight /auth/refresh so the rotating refresh token is
+// spent exactly once.
+export async function getRefreshedToken(): Promise<string | null> {
+  if (!refreshPromise) refreshPromise = performRefresh();
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+// tokenExpMs decodes a JWT's `exp` (seconds) to epoch millis, or null if unreadable.
+export function tokenExpMs(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
+    return typeof payload?.exp === "number" ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 async function performRefresh(): Promise<string | null> {
   const refreshToken = authStore.getRefreshToken();
   if (!refreshToken) return null;
@@ -65,9 +87,7 @@ api.interceptors.response.use(
 
     if (status === 401 && original && !original._retry) {
       original._retry = true;
-      if (!refreshPromise) refreshPromise = performRefresh();
-      const newToken = await refreshPromise;
-      refreshPromise = null;
+      const newToken = await getRefreshedToken();
 
       if (newToken) {
         original.headers = {
