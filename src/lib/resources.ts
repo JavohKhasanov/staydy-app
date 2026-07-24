@@ -1450,3 +1450,41 @@ export async function getRetention(): Promise<RetentionStats> {
   const res = await api.get<RetentionStats>("/retention");
   return res.data;
 }
+
+// --- exams ---
+
+export interface Exam {
+  id: string;
+  groupId: string;
+  title: string;
+  examDate?: string;
+  maxScore: number;
+  createdAt: string;
+  resultCount: number;
+}
+export interface ExamResult {
+  studentId: string;
+  studentName?: string;
+  score: number;
+}
+export async function listGroupExams(groupId: string): Promise<Exam[]> {
+  const res = await api.get(`/groups/${groupId}/exams`);
+  return unwrapList<Exam>(res.data);
+}
+export async function createExam(
+  groupId: string,
+  body: { title: string; examDate?: string; maxScore?: number },
+): Promise<Exam> {
+  const res = await api.post(`/groups/${groupId}/exams`, body);
+  return res.data as Exam;
+}
+export async function deleteExam(id: string): Promise<void> {
+  await api.delete(`/exams/${id}`);
+}
+export async function getExamResults(examId: string): Promise<{ exam: Exam; results: ExamResult[] }> {
+  const res = await api.get<{ exam: Exam; results: ExamResult[] }>(`/exams/${examId}/results`);
+  return res.data;
+}
+export async function gradeExam(examId: string, studentId: string, score: number): Promise<void> {
+  await api.put(`/exams/${examId}/results/${studentId}`, { score });
+}

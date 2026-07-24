@@ -22,7 +22,7 @@ function RetentionPage() {
 
   return (
     <div>
-      <PageHeader title="Ushlab qolish" subtitle="Retention, xavf tahlili va intervention samaradorligi" />
+      <PageHeader title="Ushlab qolish" description="Retention, xavf tahlili va intervention samaradorligi" />
 
       {isLoading && <LoadingBlock />}
       {isError && <ErrorBlock message={extractApiError(error)} onRetry={() => refetch()} />}
