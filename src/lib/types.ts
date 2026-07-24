@@ -94,6 +94,8 @@ export interface InterventionTask {
   suggestedActions?: string[];
   student: { id: string; fullName: string };
   resolutionComment?: string;
+  assignedTo?: string;
+  assignedToName?: string;
 }
 
 export interface DashboardData {

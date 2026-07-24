@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { extractApiError } from "@/lib/api";
-import { listTasks, resolveTask as resolveTaskApi, startTask } from "@/lib/resources";
+import { assignTask, listStaff, listTasks, listTeachers, resolveTask as resolveTaskApi, startTask } from "@/lib/resources";
 import type { InterventionTask } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -43,6 +43,23 @@ function TasksPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["intervention-tasks"],
     queryFn: listTasks,
+  });
+
+  // Assignee options: teachers + back-office staff (whoever can own a follow-up).
+  const teachersQ = useQuery({ queryKey: ["teachers"], queryFn: listTeachers });
+  const staffQ = useQuery({ queryKey: ["staff"], queryFn: listStaff });
+  const assignees = [
+    ...(teachersQ.data ?? []).map((t) => ({ id: t.id, fullName: t.fullName })),
+    ...(staffQ.data ?? []).map((s) => ({ id: s.id, fullName: s.fullName })),
+  ];
+
+  const assignMutation = useMutation({
+    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) => assignTask(id, assignedTo),
+    onSuccess: () => {
+      toast.success("Mas'ul biriktirildi");
+      queryClient.invalidateQueries({ queryKey: ["intervention-tasks"] });
+    },
+    onError: (err) => toast.error(extractApiError(err)),
   });
 
   const startMutation = useMutation({
@@ -144,8 +161,29 @@ function TasksPage() {
                             </ul>
                           </div>
                         )}
+                        {t.status !== "RESOLVED" && (
+                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                              Mas'ul
+                            </label>
+                            <select
+                              value={t.assignedTo ?? ""}
+                              disabled={assignMutation.isPending}
+                              onChange={(e) => assignMutation.mutate({ id: t.id, assignedTo: e.target.value })}
+                              className="mt-0.5 block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+                            >
+                              <option value="">Biriktirilmagan</option>
+                              {assignees.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.fullName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                         <div className="text-xs text-slate-500 mt-2">
                           {new Date(t.createdAt).toLocaleDateString("uz-UZ")}
+                          {t.assignedToName ? ` · ${t.assignedToName}` : ""}
                         </div>
                         {t.status !== "RESOLVED" && (
                           <div className="flex gap-2 mt-3">

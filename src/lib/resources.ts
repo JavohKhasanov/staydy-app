@@ -139,6 +139,8 @@ function mapTask(t: {
   suggestedActions?: string[];
   status: string;
   resolutionComment?: string;
+  assignedTo?: string;
+  assignedToName?: string;
   createdAt: string;
   resolvedAt?: string;
 }): InterventionTask {
@@ -151,7 +153,13 @@ function mapTask(t: {
     suggestedActions: t.suggestedActions ?? [],
     student: { id: t.studentId, fullName: t.studentName },
     resolutionComment: t.resolutionComment,
+    assignedTo: t.assignedTo,
+    assignedToName: t.assignedToName,
   };
+}
+
+export async function assignTask(id: string, assignedTo: string): Promise<void> {
+  await api.patch(`/intervention-tasks/${id}/assign`, { assignedTo });
 }
 
 // --- students ---
