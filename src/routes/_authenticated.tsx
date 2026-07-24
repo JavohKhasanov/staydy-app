@@ -32,7 +32,9 @@ export const Route = createFileRoute("/_authenticated")({
     // bounces to that role's home. Administrators/super_admin pass through.
     const role = currentRole();
     const path = location.pathname;
-    if (role === "teacher" && !path.startsWith("/me")) {
+    // Teachers live under /me, but may open an individual student detail (/students/<id>) — their
+    // core workflow (risk, attendance, homework, password reset). The bare list (/students) stays off.
+    if (role === "teacher" && !path.startsWith("/me") && !path.startsWith("/students/")) {
       throw redirect({ to: "/me/students" });
     }
     if (role === "finance" && !allowed(path, FINANCE_PATHS)) {

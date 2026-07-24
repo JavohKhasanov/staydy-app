@@ -275,7 +275,8 @@ function StudentDetailContent({ student }: { student: Student }) {
               Tahrirlash
             </Button>
           )}
-          {!isTeacher && <StudentPasswordButton studentId={student.id} name={student.fullName} />}
+          {/* Password reset: director/administrator (any student) + teacher (own students, backend-enforced); not finance. */}
+          {canAwardXP && <StudentPasswordButton studentId={student.id} name={student.fullName} />}
           {canAwardXP && <StudentXPButton studentId={student.id} name={student.fullName} />}
           {!isTeacher && (
             <Button
